@@ -1,11 +1,28 @@
+
+#Projeto 1 - RESISTENCIA DOS MATERIAIS
+#REQUISITOS DO PROGRAMA (TRABALHO)
+# O programa deve ser capaz de:
+# --Resolver os problemas planos (2D) tratados em EM423;
+# --Lidar com forÃ§as (principais e decompostas), torques e momentos;
+# --Lidar com carregamentos distribuÃ­dos sobre uma linha (polinomiais);
+# --Determinar reaÃ§Ãµes de apoio;
+# --Plotar os diagramas de esforÃ§os solicitantes.
+
+sprintf("Escolha a configuraÃ§Ã£o de formas de fixaÃ§Ã£o :: ");
+sprintf("1--> 1 apoio engastado;");
+sprintf("2--> 1 apoio pino e 1 apoio rolete;");
+sprintf("3--> 2 roletes (na ausÃªncia de torques no eixo x externos resultantes e forÃ§as no eixo x externas resultantes).");
+
+tipo = input("OpÃ§Ã£o ::");
+
 NumForcas = input("Qual o numero de forcas?\n", "s")
 TamViga = input("Qual o tamanho da viga em metros?\n", "s")
-ApoioPino = input("Onde está o apoio pino?\n", "s")
+ApoioPino = input("Onde estï¿½ o apoio pino?\n", "s")
 
-#Input forças
-#F(1,2) = Angulo da força 1
-#F(6,1) = Módulo da força 6
-N_ForPontuais = input("Qual o número de forças pontuais?\n")
+#Input forï¿½as
+#F(1,2) = Angulo da forï¿½a 1
+#F(6,1) = Mï¿½dulo da forï¿½a 6
+N_ForPontuais = input("Qual o nï¿½mero de forï¿½as pontuais?\n")
 f = zeros(N_ForPontuais,3)
 for i = 1:N_ForPontuais
   vectorr = input("[Intensidade, angulo, ponto]\n");
@@ -16,12 +33,12 @@ end
 
 
 #Input torques
-#T(1,1) = Direção do torque 1
-#T(4,3) = Ponto de aplicação do torque 4
-N_Torque = input("Quantos torques são?\n", "s");
+#T(1,1) = Direï¿½ï¿½o do torque 1
+#T(4,3) = Ponto de aplicaï¿½ï¿½o do torque 4
+N_Torque = input("Quantos torques sï¿½o?\n", "s");
 T = zeros(N_Torque,3)
 for (i = 1:N_Torque)
-  vectorr = input("[Direção, intensidade, ponto]");
+  vectorr = input("[Direï¿½ï¿½o, intensidade, ponto]");
   T(i,1) = vectorr(1);
   T(i,2) = vectorr(2);
   T(i,3) = vectorr(3);
@@ -38,21 +55,21 @@ if N_Carregamentos>0
     C(i,1) = vectorr(1);
     C(i,2) = vectorr(2);
     C(i,3) = vectorr(3)
-    #Precisa de uma lógica de input do polinimo em si
+    #Precisa de uma lï¿½gica de input do polinimo em si
     #grau(i) = C(i,3)
     #coefs(i) = input("[Coef1 Coef2 Coef3 ... CoefN]")
   end
 endif
 
-#Funções ou Módulos
+#Funï¿½ï¿½es ou Mï¿½dulos
 function Fx = AnguloParaFx(F)
-    #Fx(1) = parte X da força F(1)
+    #Fx(1) = parte X da forï¿½a F(1)
     Fx = []
 
 endfunction
 
 function Fy = AnguloParaFy(F)
-    #Fy(1) = parte X da força F(1)
+    #Fy(1) = parte X da forï¿½a F(1)
     Fy = []
 endfunction
 
