@@ -8,12 +8,8 @@
 # --Determinar reações de apoio;
 # --Plotar os diagramas de esforços solicitantes.
 
-sprintf("Escolha a configuração de formas de fixação :: ");
-sprintf("1--> 1 apoio engastado;");
-sprintf("2--> 1 apoio pino e 1 apoio rolete;");
-sprintf("3--> 2 roletes (na ausência de torques no eixo x externos resultantes e forças no eixo x externas resultantes).");
-
-tipo = input("Opção ::");
+tamanhoViga = input("Qual o tamanho da viga?\n");
+sprintf("O tamanho da viga �: %f", tamanhoViga);
 
 NumForcas = input("Qual o numero de forcas?\n", "s")
 TamViga = input("Qual o tamanho da viga em metros?\n", "s")
