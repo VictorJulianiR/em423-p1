@@ -1,9 +1,16 @@
+
+#Etapas
+
 - [ ] Tamanho viga
-- [ ] Aonde apoio pino 
-- [ ] Aonde apoio rolete
+- [ ] Escolha uma opcao
+- [ ] Aonde apoio 1 
+- [ ] Aonde apoio 2 (Pode nao existir)
 - [ ] Quantas forcas externas pontuais
 - [ ] Forcas externas - intensidade , angulo* , ponto
-- [ ] Torque - direct , intensidade  e ponto
+- [ ] Quantos torques
+- [ ] Torque - direção , intensidade  e ponto
+- [ ] Quantos momentos
+- [ ] Momento - direção , intensidade  e ponto
 - [ ] Quantos sao os carregamentos distribuidos
 - [ ] Carregamentos distribuído - ponto inicial, ponto final e função polinomial
 
@@ -15,6 +22,8 @@
 - [ ] Iguala tudo 
 
 - [ ] Fazer grafico diagrama
+  - [ ] Calculos
+  - [ ] Montagem
 
 - [ ] Printar tudo na tela
 
