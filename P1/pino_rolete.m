@@ -1,15 +1,15 @@
 clear;
 clc;
 disp("#####################################################################");
-disp("REFERENCIAIS/CONVEN��ES:");
-disp("1a. For�as verticais s�o positivas no sentido do eixo Y.");
-disp("1b. For�as horizontais s�o positivas no sentido do eixo X.");
-disp("1c. Torques s�o positivos no sentido do eixo X.");
-disp("1d. Momentos s�o positivos no sentido anti-hor�rio.");
+disp("REFERENCIAIS/CONVENÇÕES:");
+disp("1a. Forças verticais são positivas no sentido do eixo Y.");
+disp("1b. Forças horizontais são positivas no sentido do eixo X.");
+disp("1c. Torques são positivos no sentido do eixo X.");
+disp("1d. Momentos são positivos no sentido anti-horário.");
 disp("");
-disp("2. Os referencias s�o adotados todos a partir do ini�cio da viga (ou seja, posi��o 0)")
+disp("2. Os referencias são adotados todos a partir do início da viga (ou seja, posição 0)")
 disp("");
-disp("3. Todas as unidades devem estar no SI menos os �ngulos que est�o em graus");
+disp("3. Todas as unidades devem estar no SI menos os ângulos que estão em graus");
 disp("#####################################################################\n");
 
 function forcaCarregamento = calcForcaCarregamento(carregamento)
@@ -30,25 +30,25 @@ function momentoCarregamento = calcMomentoCarregamento(carregamento)
 endfunction
 
 function forcasExternas = getForcas()
-  numForcasPontuais = input("Quantas for�as pontuais est�o sendo aplicadas na viga: ");
+  numForcasPontuais = input("Quantas forças pontuais estão sendo aplicadas na viga: ");
 
   forcasExternas = zeros(numForcasPontuais,3); # [x, fx, fy]
 
   if (numForcasPontuais > 0)
     disp("");
-    disp("Para cada for�a, digite sua posi��o na viga, intensidade, �ngulo em graus");
+    disp("Para cada força, digite sua posição na viga, intensidade, ângulo em graus");
     for i = 1:numForcasPontuais
-      disp(sprintf("For�a %d\n", i));
-      pos = input("Posi��o: ");
+      disp(sprintf("Força %d\n", i));
+      pos = input("Posição: ");
       intensidade = input("Intensidade: ");
-      angulo = input("�ngulo: ");
+      angulo = input("Ângulo: ");
       
       fx = intensidade*cos(deg2rad(angulo));
       fy = intensidade*sin(deg2rad(angulo));
       
       forcasExternas(i,:) = [pos;fx;fy]
       
-      disp("For�a computada com sucesso!");
+      disp("Força computada com sucesso!");
     endfor
   endif
 endfunction
@@ -61,10 +61,10 @@ function torques = getTorques()
 
   if (numTorques > 0)
     disp("");
-    disp("Para cada torque, digite sua posi��o e sua intensidade - lembrando que se a intensidade � negativa, o torque � tido no sentido oposto do eixo X.");
+    disp("Para cada torque, digite sua posição e sua intensidade - lembrando que se a intensidade é negativa, o torque � tido no sentido oposto do eixo X.");
     for i = 1:numTorques
       disp(sprintf("Torque %d\n", i));
-      pos = input("Posi��o: ");#precisamos da posicao ?
+      pos = input("Posição: ");#precisamos da posicao ?
       intensidade = input("Intensidade: ");
       
       torques(i, :) = [pos;intensidade]
@@ -75,16 +75,16 @@ function torques = getTorques()
 endfunction
 
 function momentos = getMomentos()
-  numMomentos = input("Quantos momentos estao sendo aplicados na viga: ");
+  numMomentos = input("Quantos momentos estão sendo aplicados na viga: ");
 
   momentos = zeros(numMomentos,2); # [x, intensidade]
 
   if (numMomentos > 0)
     disp("");
-    disp("Para cada momento, digite sua posi��o e sua intensidade - lembrando que se a intensidade � negativa, o momento � tido no sentido hor�rio.");
+    disp("Para cada momento, digite sua posição e sua intensidade - lembrando que se a intensidade é negativa, o momento � tido no sentido hor�rio.");
     for i = 1:numMomentos
       disp(sprintf("Momento %d\n", i));
-      pos = input("Posi��o: ");#precisamos de posicao ?
+      pos = input("Posição: ");#precisamos de posicao ?
       intensidade = input("Intensidade: ");
       
       momentos(i, :) = [pos;intensidade]
@@ -96,19 +96,19 @@ endfunction
 
 
 function carregamentos = getCarregamentos()
-  numCarregamentos = input("Quantos carregamentos distribu�dos est�o sendo aplicados na viga: ");
-  n = input("Digite o grau m�ximo 'n' da fun��o de carregamento: ")
+  numCarregamentos = input("Quantos carregamentos distribuídos estão sendo aplicados na viga: ");
+  n = input("Digite o grau máximo 'n' da função de carregamento: ")
   
   carregamentos = zeros(numCarregamentos, n+3); # [posIni, posFim, coefs]
 
   if (numCarregamentos > 0)
     disp("");
-    disp("Para cada carregamento, digite as suas posi��es inicial e final e sua fun��o polinomial (em N/m)");
+    disp("Para cada carregamento, digite as suas posições inicial e final e sua função polinomial (em N/m)");
     for i = 1:numCarregamentos
       disp(sprintf("Carregamento %d\n", i));
-      posIni = input("Posi��o inicial: ");
-      posFim = input("Posi��o final: ");
-      coefs = input("Coeficientes (seguindo o padr�o) [an;an-1;...;a1;a0]:")
+      posIni = input("Posição inicial: ");
+      posFim = input("Posição final: ");
+      coefs = input("Coeficientes (seguindo o padrão) [an;an-1;...;a1;a0]:")
       
       carregamentos(i, :) = [posIni;posFim;coefs]
       
@@ -126,26 +126,26 @@ momentos = getMomentos()
 carregamentos = getCarregamentos()
 
 ###############################################
-######## C�LCULOS PARA O PINO e ROLETE! ###########
+######## CALCULOS PARA O PINO e ROLETE! ###########
 ###############################################
 
-# 1. Equilibrio de for�as na horizontal:
-fx = sum(forcas(:,2)); #For�as pontuais
+# 1. Equilibrio de forças na horizontal:
+fx = sum(forcas(:,2)); #Forças pontuais
 fx_pino = -fx
 printf("Fx do apoio tipo pino: %f\n", fx);
 
-# 2. Equilibrio de for�as na vertical:
+# 2. Equilibrio de forças na vertical:
 fy=sum(forcas(:,3))
 
 forcasCarregamento = zeros(rows(carregamentos),1);
-for i = 1:rows(carregamentos) #For�as de carregamento distribu�do
+for i = 1:rows(carregamentos) #Forças de carregamento distribuído
   forcasCarregamentos(i) = calcForcaCarregamento(carregamentos(i,:))
   fy = fy + forcasCarregamentos(i);
 endfor
 
 fy = -fy
 
-# 3. Equilibrio de momentos usando 0 como refrencial:
+# 3. Equilibrio de momentos usando 0 como referencial:
 momento = sum(momentos(:2)); #soma dos momentos externos
 
 momentoForcasExternas = dot(forcas(:,1), forcas(:, 3))
@@ -153,7 +153,7 @@ momentoForcasExternas = dot(forcas(:,1), forcas(:, 3))
 momento = momento + sum(momentoForcasExternas)
 
 momentosCarregamentos = zeros(rows(carregamentos),1);
-for i = 1:rows(carregamentos) #Momento do carregamento distribu�do
+for i = 1:rows(carregamentos) #Momento do carregamento distribuido
   momentosCarregamentos(i) = calcMomentoCarregamento(carregamentos(i,:))
   momento = momento + momentosCarregamentos(i);
 endfor
@@ -173,6 +173,6 @@ torque = sum(torques(:,2));
 torque = -torque
 printf("Torque de reacao do apoio tipo pino: %f\n", torque);
 
-# TODO: DIAGRAMA DE ESFOR�OS SOLICITANTES
+# TODO: DIAGRAMA DE ESFORÇOS SOLICITANTES
 
 
