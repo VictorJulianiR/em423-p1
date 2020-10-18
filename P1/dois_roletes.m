@@ -42,6 +42,26 @@ function momentoCarregamento = calcMomentoCarregamento(carregamento)
   momentoCarregamento = polyval(integral, fim) - polyval(integral, ini);
 endfunction
 
+function momentos = getMomentos()
+  numMomentos = input("Quantos momentos estao sendo aplicados na viga: ");
+
+  momentos = zeros(numMomentos,2); # [x, intensidade]
+
+  if (numMomentos > 0)
+    disp("");
+    disp("Para cada momento, digite sua posição e sua intensidade - lembrando que se a intensidade é negativa, o momento é tido no sentido horário.");
+    for i = 1:numMomentos
+      disp(sprintf("Momento %d\n", i));
+      pos = input("Posição: ");
+      intensidade = input("Intensidade: ");
+      
+      momentos(i, :) = [pos;intensidade];
+      
+      disp("Momento computado com sucesso!\n");
+    endfor
+  endif
+endfunction
+
 
 function forcasExternas = getForcas()
   numForcasPontuais = input("Quantas forças pontuais estão sendo aplicadas na viga: ");
@@ -96,7 +116,7 @@ pos_rolete_A = input ("Digite a posição do rolete 1: ");
 pos_rolete_B = input ("Digite a posição do rolete 2: ");
 forcas = getForcas()
 #torques = getTorques()
-#momentos = getMomentos()
+momentos = getMomentos()
 carregamentos = getCarregamentos()
 
 ###############################################
@@ -109,14 +129,13 @@ fx = 0.0; #Forças pontuais
 printf("Fx: %f\n", fx);
 
 # 2. Equilibrio de forças na vertical:
-fy = 0;
-
+forcaCarregamento = 0;
 for i = 1:rows(carregamentos) #Forças de carregamento distribuído
-  forcaCarregamento = calcForcaCarregamento(carregamentos(i,:))
-  fy = fy + forcaCarregamento;
+  forcaCarregamento = forcaCarregamento + calcForcaCarregamento(carregamentos(i,:));
 endfor
 
-fy = fy + sum(forcas(:,2)); #Forças pontuais
+
+fy = forcaCarregamento + sum(forcas(:,2)) #Forças pontuais
 #fy = -fy #verificar tbm nos outros exe de apoio. Essa converção não é necessaria colocando o angulo correto.
 printf("Fy: %f\n", fy);
 
@@ -126,29 +145,46 @@ torque = 0.0;
 printf("Torque: %f\n", torque);
 
 # 4. Equilibrio de momentos:
-momento = 0;
-
-for i = 1:rows(carregamentos) #Momento do carregamento distribuído
-  momentoCarregamento = calcMomentoCarregamento(carregamentos(i,:))
-  momento = momento + momentoCarregamento;
-endfor
+#Será escolhido o ponto de referencia sempre o rolete mais a esquerda.
+if (pos_rolete_A < pos_rolete_B)
+  pontoReferenciaMomento = pos_rolete_A
+else
+  pontoReferenciaMomento = pos_rolete_B
+endif
 
 # Momentos externos
-#momento = momento + sum(momentos(:,2)); #Forças pontuais
+momentoExterno = sum(momentos(:,2));
 
-#Momentos gerados pelas forças externas pontuais
-momento_forcas = dot(forcas(:,1), forcas(:, 2));
-momento = momento + momento_forcas;
-#momento = -momento;
-printf("Momento: %f\n", momento);
+# Momento Carregamento
+momentoCarregamento = 0
+for i = 1:rows(carregamentos) #Momento do carregamento distribuído
+  if carregamentos(i,2) <= pontoReferenciaMomento
+    momentoCarregamento = momentoCarregamento + calcMomentoCarregamento(carregamento(i,:))
+  else
+    momentoCarregamento = momentoCarregamento - calcMomentoCarregamento(carregamento(i,:))
+  endif
+endfor
+
+# Momento Forcas
+momentoForcas = 0
+for i = 1:rows(forcas) #Momento do carregamento distribuído
+  if forcas(i,1) < pontoReferenciaMomento
+    momentoForcas = momentoForcas + forcas(i,2)*abs(forcas(i,1)-pontoReferenciaMomento)
+  elseif forcas(i,1) > pontoReferenciaMomento
+    momentoForcas = momentoForcas - forcas(i,2)*abs(forcas(i,1)-pontoReferenciaMomento)
+  endif
+endfor
+
+momentoTotal = momentoForcas + momentoCarregamento + momentoExterno
+
 
 #Forças de apoio
 if (pos_rolete_A < pos_rolete_B)
-  Fyb = (momento - (pos_rolete_A * fy)) / (pos_rolete_B-pos_rolete_A)
-  Fya = ((pos_rolete_B * fy) - momento) / (pos_rolete_B-pos_rolete_A) 
+  Fyb = (-1*momentoTotal)/(pos_rolete_B-pos_rolete_A)
+  Fya = -1*(Fyb + fy) 
 else
-  Fya = (momento - (pos_rolete_B * fy)) / (pos_rolete_A-pos_rolete_B)
-  Fyb = ((pos_rolete_A * fy) - momento) / (pos_rolete_A-pos_rolete_B)
+  Fya = (-1*momentoTotal) / (pos_rolete_A-pos_rolete_B)
+  Fyb = -1*(Fya + fy) 
 endif
 
 printf("Força de apoio para o relote 1: %f\n", Fya);
