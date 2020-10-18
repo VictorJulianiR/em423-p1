@@ -115,7 +115,6 @@ tamanhoViga = input("Digite o tamanho da viga: ");
 pos_rolete_A = input ("Digite a posição do rolete 1: ");
 pos_rolete_B = input ("Digite a posição do rolete 2: ");
 forcas = getForcas()
-#torques = getTorques()
 momentos = getMomentos()
 carregamentos = getCarregamentos()
 
@@ -192,3 +191,5 @@ printf("Força de apoio para o rolete 2: %f\n", Fyb);
 
 
 # TODO: DIAGRAMA DE ESFORÇOS SOLICITANTES
+
+PontosDeInteresse = [unique(vertcat(pos_rolete_A,pos_rolete_B,forcas(:,1),momentos(:,1),carregamentos(:,1),carregamentos(:,2)))]
