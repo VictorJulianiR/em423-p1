@@ -58,7 +58,7 @@ function forcasExternas = getForcas()
       angulo = input("Ângulo: ");
       
       fx = intensidade*cos(deg2rad(angulo));
-      fy = intensidade*sin(deg2rad(angulo));
+      fy = -1*(intensidade*sin(deg2rad(angulo)));
       
       forcasExternas(i,:) = [pos;fx;fy];
       
@@ -138,12 +138,12 @@ momentos = getMomentos();
 carregamentos = getCarregamentos();
 
 %}
-tamanhoViga = 9;
+tamanhoViga = 18;
 forcas = zeros(0,3); # [x, fx, fy]
 ForcasExternas = zeros(0,3)
 torques = zeros(0,2); # [x, intensidade]
 momentos = zeros(0,2); # [x, intensidade
-carregamentos = [0,9,160,0];
+carregamentos = [0,9,-160,0;9,18,-160,-1440];
 %{
 tamanhoViga = 5;
 forcas = [3,0,5000;5,0,5000]; # [x, fx, fy]
@@ -167,11 +167,11 @@ printf("Fx: %.2f\n", fx);
 
 # 2. Equilibrio de forças na vertical:
 fy = 0;
+forcaCarregamento = 0
 for i = 1:rows(carregamentos) #Forças de carregamento distribuído
-  forcaCarregamento = calcForcaCarregamento(carregamentos(i,:));
-  fy = fy + forcaCarregamento;
+  forcaCarregamento = forcaCarregamento + calcForcaCarregamento(carregamentos(i,:));
 endfor
-fy = -1*(fy + sum(forcas(:,3))); #Forças pontuais
+fy = -1*(forcaCarregamento + sum(forcas(:,3))); #Forças pontuais
 printf("Fy: %.2f\n", fy);
 ForcaApoioVertical = fy;
 
@@ -181,15 +181,17 @@ printf("Torque: %.2f\n", torque);
 
 # 4. Equilibrio de momentos:
 momento = 0;
+momentoCarregamento = 0;
 for i = 1:rows(carregamentos) #Momento do carregamento distribuído
-  momentoCarregamento = calcMomentoCarregamento(carregamentos(i,:));
-  momento = momento + momentoCarregamento;
+  momentoCarregamento = momentoCarregamento + calcMomentoCarregamento(carregamentos(i,:));
 endfor
+momentoCarregamento
 # Momentos externos
-momento = momento + sum(momentos(:,2));
+momentoExterno = sum(momentos(:,2));
 #Momentos gerados pelas forças externas pontuais
 momento_forcas = dot(forcas(:,1), forcas(:, 3));
-momento = momento + momento_forcas;
+
+momento = -1*momentoExterno + momento_forcas + momentoCarregamento
 printf("Momento: %.2f\n", momento);
 MomentoApoio = momento
 disp("#####################################################################\n");
@@ -232,13 +234,13 @@ for i = 2:rows(PontosDeInteresse) # começa em 2 pois o primeiro ponto de intere
   endfor
   # V interior será calculado posteriormente quando tivermos os valores de x para a integral
   # caso exista carregamento.
-  ForcasExternas 
+  F_externas 
   ForcaApoioVertical 
   ForcaCarregamento
-  V_interior_parcial = [F_externas + ForcaApoioVertical - ForcaCarregamento]
+  V_interior_parcial = [F_externas + ForcaApoioVertical + ForcaCarregamento]
   # Esta parte só serve caso exista um carregamento entre os pontos
   # de interesse, pois dessa forma desconheceremos o limite da integral
-  V_interior_carregamento_em_x =  carregamentos(carregamentos(:,1) == PontosDeInteresse(i-1),:)
+  V_interior_carregamento_em_x =  carregamentos(carregamentos(:,2) == PontosDeInteresse(i),:)
   
   ########################################################################################
   # Calculo M interno - M(interno)(x) = Mt(resultante) + (somatorio(x*carregamentos(x)))
@@ -251,10 +253,10 @@ for i = 2:rows(PontosDeInteresse) # começa em 2 pois o primeiro ponto de intere
   # M interior será calculado posteriormente quando tivermos os valores de x para a integral.
   # Este momento interno ainda não considera o momento gerado pelo V interno
   # Este MomentoCarregamento são aqueles gerados por carregamentos anteriores ao ponto de interesse anterior. 
-  M_interior_parcial = [MomentoPontual + MomentoCarregamentos]
+  M_interior_parcial = [MomentoPontual - MomentoCarregamentos + MomentoApoio]
   # Esta parte só serve caso exista um carregamento entre os pontos
   # de interesse, pois dessa forma desconheceremos o limite da integral
-  M_interior_carregamento_em_x = carregamentos(carregamentos(:,1) == PontosDeInteresse(i-1),:);
+  M_interior_carregamento_em_x = carregamentos(carregamentos(:,2) == PontosDeInteresse(i),:);
 
   #####################################################
   # Calculo N interno - N(interno)(x) = Fx(resultante)
@@ -271,26 +273,30 @@ for i = 2:rows(PontosDeInteresse) # começa em 2 pois o primeiro ponto de intere
   ####################################################################
   
   # Criando valores de x no intervalo de dois pontos de interesse
+
   X = transpose(linspace(PontosDeInteresse(i-1),PontosDeInteresse(i),4))
-  DadosDoDiagrama_V_x = zeros(X, 1)
-  DadosDoDiagrama_M_x = zeros(X, 1)
-  
+  DadosDoDiagrama_V_x = zeros(rows(X), 1)
+  DadosDoDiagrama_M_x = zeros(rows(X), 1)
+  teste = rows(X)
   for j = 1:rows(X)
     # Se existir carregamento entre os pontos de interesse a integral sera entre o ponto anterior e o x
-    if (10 != 10 && carregamentos(:,1)==PontosDeInteresse(i-1)) 
-      V_interior_carregamento_em_x(1) = PontosDeInteresse(i-1) # posIni
+    if (sum(carregamentos(:,2)==PontosDeInteresse(i))==1) 
+      V_interior_carregamento_em_x(1) = carregamentos(carregamentos(:,2)==PontosDeInteresse(i),1) # posIni
       V_interior_carregamento_em_x(2) = X(j)  # posFim
-      V_x = V_interior_parcial - calcForcaCarregamento(V_interior_carregamento_em_x)
-      M_interior_carregamento_em_x(1) = PontosDeInteresse(i-1) # posIni
+      V_x = -1*(V_interior_parcial + calcForcaCarregamento(V_interior_carregamento_em_x))
+      M_interior_carregamento_em_x(1) = carregamentos(carregamentos(:,2)==PontosDeInteresse(i),1) # posIni
       M_interior_carregamento_em_x(2) = X(j)  # posFim
-      M_x = M_interior_parcial + calcMomentoCarregamento(M_interior_carregamento_em_x) + (V_x * X(j))
+      M_interior_parcial
+      calcMomentoCarregamento(M_interior_carregamento_em_x)
+      (V_x * X(j))
+      M_x = -1*(M_interior_parcial - calcMomentoCarregamento(M_interior_carregamento_em_x) - (V_x * X(j)))
     else
-      V_x = V_interior_parcial 
-      M_x = M_interior_parcial + (V_x * X(j))
+      V_x = -1*V_interior_parcial 
+      M_x = -1*(M_interior_parcial - (V_x * X(j)))
     endif
     
     #PontosDeInteresse(i) == forcas(forcas(:,2) != 0,:)(:,1) && PontosDeInteresse(i) == forcas(forcas(:,3) == 0,:)(:,1)
-
+    
     
 
     #printf(DadosDoDiagrama_V_x(j));
