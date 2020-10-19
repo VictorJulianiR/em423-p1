@@ -19,8 +19,8 @@ disp("O engaste será sempre localizado na parte esquerda da barra.")
 # --Podemos considerar a representação das forças verticais e horizontais atraves 
 # do sinal positivo ou negativo da força ou pelo angulo correspondente. Qual é melhor?
 # --Para marcar forças pontuais que são: 
-# ----verticais para baixo: usa angulo 90
-# ----verticais para cima: usa angulo 270
+# ----verticais para cima: usa angulo 90
+# ----verticais para baixo: usa angulo 270
 # ----horizontais para esquerda: usa angulo 0
 # ----horizontais para direita: usa angulo 180
 # -- Considerando dois roletes, obrigatoriamente a resultante das forças externas verticais
@@ -133,21 +133,18 @@ function carregamentos = getCarregamentos()
     endfor
   endif
 endfunction
-%{
+
 tamanhoViga = input("Digite o tamanho da viga: ");
+
+if tamanhoViga == 0
+  error("Viga inexistente")
+ endif
 
 forcas = getForcas();
 torques = getTorques();
 momentos = getMomentos();
 carregamentos = getCarregamentos();
 
-%}
-tamanhoViga = 18;
-forcas = zeros(0,3); # [x, fx, fy]
-ForcasExternas = zeros(0,3);
-torques = zeros(0,2); # [x, intensidade]
-momentos = zeros(0,2); # [x, intensidade
-carregamentos = [0,9,-160,0];
 
 
 %{
@@ -288,7 +285,7 @@ for i = 2:rows(PontosDeInteresse) # começa em 2 pois o primeiro ponto de intere
   # Criando valores de x no intervalo de dois pontos de interesse
 
   # TODO: MUDAR A DISTANCIA
-  X = transpose(linspace(PontosDeInteresse(i-1),PontosDeInteresse(i),4));
+  X = transpose(linspace(0,tamanhoViga,tamanhoViga*20));
   DadosDoDiagrama_V_x = zeros(rows(X), 1);
   DadosDoDiagrama_M_x = zeros(rows(X), 1);
   for j = 1:rows(X)
