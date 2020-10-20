@@ -189,7 +189,114 @@ endif
 printf("Força de apoio para o relote 1: %f\n", Fya);
 printf("Força de apoio para o rolete 2: %f\n", Fyb);
 
-
-# TODO: DIAGRAMA DE ESFORÇOS SOLICITANTES
+######################################
+# DIAGRAMA DE ESFORÇOS SOLICITANTES
+######################################
+# Pontos de interesse
+# Sempre escolhemos o lado esquerdo da secção para encontar as forças solicitantes,
+# pois ele tem o ponto considerado o nosso referencial 0.
 
 PontosDeInteresse = [unique(vertcat(pos_rolete_A,pos_rolete_B,forcas(:,1),momentos(:,1),carregamentos(:,1),carregamentos(:,2)))]
+forcas(:,1) = [pos_rolete_A, Fya];
+forcas(:,1) = [pos_rolete_B, Fyb]; 
+g = figure ();
+for i = 2:rows(PontosDeInteresse) # começa em 2 pois o primeiro ponto de interesse sempre sera 0.0
+  printf("Ponto de interesse: %d\n", i)
+  ####################################################################################
+  # Calculo V interno  V(interno)(x) = Fy(resultante) - (somatorio(carregamentos(x)))
+  ####################################################################################
+  F_externas = sum(forcas(forcas(:,1) < PontosDeInteresse(i),:)(:,3)); #foças precisam estar no intervalo (0.0,pontoDeINnteresse(i))
+  # Existe a possibilidade de ter dois tipos de carregamentos aqui:
+    # -- Dado um intervalo de pontos de interesse, ao fazermos a secção e pegarmos 
+    # -- a figura  com referencial 0(lado esquerdo), há a possibilidade de haver 
+    # -- outros pontos de interesse que são diferente do atual. Nestes outros pontos 
+    # -- pode haver carregamentos que estão definidos em um intervalo e portanto são integraveis. 
+    # -- Porém, considerando o ponto de interesse atual, pode existir um carregamento
+    # -- que tem integral avaliada de 0 a x sendo pontoAnterior < x < pontoAtual
+    # -- Neste caso x também é o ponto em que fizemos a secção na figura.
+    # -- Desta forma devemos pegar o somatório dos carregamentos que estão antes 
+    # -- do pontoAnterior, pois possuem integral definida. 
+    # -- Pode não haver nenhum carregamento também. 
+  CarregamentosIntegraveis = carregamentos(carregamentos(:,2)<= PontosDeInteresse(i-1),:);
+  ForcaCarregamento = 0;
+  for j = 1:rows(CarregamentosIntegraveis)
+    ForcaCarregamento = ForcaCarregamento + calcForcaCarregamento(CarregamentosIntegraveis(j,:));
+  endfor
+  # V interior será calculado posteriormente quando tivermos os valores de x para a integral
+  # caso exista carregamento.
+  V_interior_parcial = [F_externas + ForcaCarregamento];
+  # Esta parte só serve caso exista um carregamento entre os pontos
+  # de interesse, pois dessa forma desconheceremos o limite da integral
+  V_interior_carregamento_em_x =  carregamentos(carregamentos(:,2) == PontosDeInteresse(i),:);
+  
+  ########################################################################################
+  # Calculo M interno - M(interno)(x) = Mt(resultante) + (somatorio(x*carregamentos(x)))
+  ########################################################################################
+  MomentoPontual = sum(momentos(momentos(:,1) < PontosDeInteresse(i),:)(:,2)); # momentos precisam estar no intervalo (0.0,pontoAtual)
+  MomentoCarregamentos = 0;
+  for j = 1:rows(CarregamentosIntegraveis) #Momento do carregamento distribuído
+    MomentoCarregamentos = MomentoCarregamentos + calcMomentoCarregamento(CarregamentosIntegraveis(j,:));
+  endfor
+  # M interior será calculado posteriormente quando tivermos os valores de x para a integral.
+  # Este momento interno ainda não considera o momento gerado pelo V interno
+  # Este MomentoCarregamento são aqueles gerados por carregamentos anteriores ao ponto de interesse anterior. 
+  M_interior_parcial = MomentoPontual + MomentoCarregamentos;
+  # Esta parte só serve caso exista um carregamento entre os pontos
+  # de interesse, pois dessa forma desconheceremos o limite da integral
+  M_interior_carregamento_em_x = carregamentos(carregamentos(:,2) == PontosDeInteresse(i),:);
+  
+  ####################################################################
+  # Calculo dos valores da tabela necessario para montar o diagrama
+  ####################################################################
+  
+  # Criando valores de x no intervalo de dois pontos de interesse
+
+  # TODO: MUDAR A DISTANCIA
+  X = transpose(linspace(0,tamanhoViga,tamanhoViga*20));
+  DadosDoDiagrama_V_x = zeros(rows(X), 1);
+  DadosDoDiagrama_M_x = zeros(rows(X), 1);
+  for j = 1:rows(X)
+      printf("Ponto em x: %d\n", X(j))
+
+    # Se existir carregamento entre os pontos de interesse a integral sera entre o ponto anterior e o x
+    if (sum(carregamentos(:,2)==PontosDeInteresse(i))==1) 
+      V_interior_carregamento_em_x(1) = carregamentos(carregamentos(:,2)==PontosDeInteresse(i),1); # posIni
+      V_interior_carregamento_em_x(2) = X(j);  # posFim
+      V_x = -1*(V_interior_parcial + calcForcaCarregamento(V_interior_carregamento_em_x));
+      M_interior_carregamento_em_x(1) = carregamentos(carregamentos(:,2)==PontosDeInteresse(i),1); # posIni
+      M_interior_carregamento_em_x(2) = X(j) ; # posFim
+      M_x = -1*(M_interior_parcial + calcMomentoCarregamento(M_interior_carregamento_em_x) - (V_x * X(j)));
+    else
+      V_x = -1*V_interior_parcial; 
+      M_x = -1*(M_interior_parcial - (V_x * X(j)));
+    endif
+
+    printf("V_x: %d\n", V_x)
+    printf("M_x: %d\n", M_x)
+        
+    
+    #printf(DadosDoDiagrama_V_x(j));
+    DadosDoDiagrama_V_x(j) = [V_x];
+    DadosDoDiagrama_M_x(j) = [M_x];
+  endfor   
+  # plot da função para cada intervalo dos pontos de interesse
+  
+
+  subplot(2,1,1);
+  hold on;
+  xlabel ("x");
+  ylabel ("V(x)");
+  title ("Forcas de corte");
+  plot(X,DadosDoDiagrama_V_x);
+  hold off;     
+  
+  subplot(2,1,2);
+  hold on;
+  xlabel ("x");
+  ylabel ("M(x)");
+  title ("Momento interno");
+  plot(X,DadosDoDiagrama_M_x);
+  hold off;
+endfor
+print diagramaForcasSolicitantes.pdf;
+open diagramaForcasSolicitantes.pdf

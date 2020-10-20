@@ -11,20 +11,7 @@ disp("1e. Caso forças de carregamento estejam sobrepostas, cabe ao usário faze
 disp("1f. Como adotamos refencial de forças de cima pra baixo como negativo, carregamentos que atuem em cima da barra devem ter valor de sua função negativa")
 disp("");
 disp("2. Os referencias são adotados todos a partir do início da viga, ou seja, posição (0,0)")
-disp("O engaste será sempre localizado na parte esquerda da barra.")
-# --(Afirmação acima) não necessariamente pois tem exercícios que só serão resolvidos
-# mudando o referencial. Talvez somente para o apoio engastado esta afirmação é válida.
-# --Supomos sempre que as vigas são ajustadas para que se localize no eixo x com inicio em (0,0)
-# --Supomos também que os carregamentos distribuidos são sempre verticais de cima para baixo?
-# --Podemos considerar a representação das forças verticais e horizontais atraves 
-# do sinal positivo ou negativo da força ou pelo angulo correspondente. Qual é melhor?
-# --Para marcar forças pontuais que são: 
-# ----verticais para cima: usa angulo 90
-# ----verticais para baixo: usa angulo 270
-# ----horizontais para esquerda: usa angulo 0
-# ----horizontais para direita: usa angulo 180
-# -- Considerando dois roletes, obrigatoriamente a resultante das forças externas verticais
-# deve ser de cima para baixo e deve estar entre os dois roletes.     
+disp("O engaste será sempre localizado na parte esquerda da barra.") 
 disp("");
 disp("3. Todas as unidades devem estar no SI menos os ângulos que estão em graus");
 disp("#####################################################################\n");
@@ -333,21 +320,3 @@ for i = 2:rows(PontosDeInteresse) # começa em 2 pois o primeiro ponto de intere
 endfor
 print diagramaForcasSolicitantes.pdf;
 open diagramaForcasSolicitantes.pdf
-#%}
-%{
-x = 0:0.01:3;
-hf = figure ();
-plot (x, erf (x));
-hold on;
-plot (x, x, "r");
-axis ([0, 3, 0, 1]);
-text (0.65, 0.6175, ['$\displaystyle\leftarrow x = {2 \over \sqrt{\pi}}'...
-                     '\int_{0}^{x} e^{-t^2} dt = 0.6175$'],
-      "interpreter", "latex");
-xlabel ("x");
-ylabel ("erf (x)");
-title ("erf (x) with text annotation");
-print (hf, "plot15_7.pdf", "-dpdflatexstandalone");
-system ("pdflatex plot15_7");
-open plot15_7.pdf
-%}
