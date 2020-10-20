@@ -247,10 +247,19 @@ for i = 2:rows(PontosDeInteresse) # começa em 2 pois o primeiro ponto de intere
   for j = 1:rows(CarregamentosIntegraveis) #Momento do carregamento distribuído
     MomentoCarregamentos = MomentoCarregamentos + calcMomentoCarregamento(CarregamentosIntegraveis(j,:));
   endfor
+
+  MomentoForcasExternas = 0;
+  for j = 1:rows(forcas)
+    if forcas(j,1) < PontosDeInteresse(j)
+      MomentoForcasExternas = MomentoForcasExternas - forcas(j,3)*forcas(j,1)
+    endif
+  endfor
+
+
   # M interior será calculado posteriormente quando tivermos os valores de x para a integral.
   # Este momento interno ainda não considera o momento gerado pelo V interno
   # Este MomentoCarregamento são aqueles gerados por carregamentos anteriores ao ponto de interesse anterior. 
-  M_interior_parcial = MomentoPontual + MomentoCarregamentos + MomentoApoio;
+  M_interior_parcial = MomentoPontual + MomentoCarregamentos + MomentoApoio + MomentoForcasExternas;
   # Esta parte só serve caso exista um carregamento entre os pontos
   # de interesse, pois dessa forma desconheceremos o limite da integral
   M_interior_carregamento_em_x = carregamentos(carregamentos(:,2) == PontosDeInteresse(i),:);
