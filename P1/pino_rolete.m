@@ -26,7 +26,7 @@ function momentoCarregamento = calcMomentoCarregamento(carregamento)
   coefs = transpose(carregamento(3:end));
   coefs = [coefs, 0]
   integral = polyint(coefs);
-  momentoCarregamento = polyval(integral, fim) - polyval(integral, ini);
+  momentoCarregamento = -1*(polyval(integral, fim) - polyval(integral, ini));
 endfunction
 
 function forcasExternas = getForcas()
@@ -132,7 +132,7 @@ carregamentos = getCarregamentos()
 # 1. Equilibrio de forças na horizontal:
 fx = sum(forcas(:,2)); #Forças pontuais
 fx_pino = -fx
-printf("Fx do apoio tipo pino: %f\n", fx);
+printf("-----> Fx do apoio tipo pino: %f\n", fx_pino);
 
 # 2. Equilibrio de forças na vertical:
 fy=sum(forcas(:,3))
@@ -146,9 +146,9 @@ endfor
 fy = -fy
 
 # 3. Equilibrio de momentos usando 0 como referencial:
-momento = sum(momentos(:2)); #soma dos momentos externos
+momento = sum(momentos(:,2));; #soma dos momentos externos
 
-momentoForcasExternas = dot(forcas(:,1), forcas(:, 3))
+momentoForcasExternas = -1*dot(forcas(:,1), forcas(:, 3))
 
 momento = momento + sum(momentoForcasExternas)
 
@@ -158,21 +158,20 @@ for i = 1:rows(carregamentos) #Momento do carregamento distribuido
   momento = momento + momentosCarregamentos(i);
 endfor
 
-momento = -momento
+momento = -momento 
 
 #4.Achando Fy do rolete e Fy do pino com a equacao de equlibrio dos momento e equilibrio das focas na vertical
-resultado_sistema= [ 1 , 1 ; posicaoRolete , posicaoPino] \ [fy ; momento]  
+resultado_sistema= [ 1 , 1 ; -posicaoRolete , -posicaoPino] \ [fy ; momento]  
+
 fy_rolete = resultado_sistema(1)
-fy_pino = resultado_sistema(1)
-printf("Fy do apoio tipo pino: %f\n", fy_pino);
-printf("Fy do apoio tipo rolete: %f\n", fy_rolete);
+fy_pino = resultado_sistema(2)
+printf("-------->Fy do apoio tipo pino: %f\n", fy_pino);
+printf("-------->Fy do apoio tipo rolete: %f\n", fy_rolete);
 
 # 4. Equilibrio de torques:
 
 torque = sum(torques(:,2));
 torque = -torque
-printf("Torque de reacao do apoio tipo pino: %f\n", torque);
-
-# TODO: DIAGRAMA DE ESFORÇOS SOLICITANTES
+printf("------->Torque de reacao do apoio tipo pino: %f\n", torque);
 
 
