@@ -117,6 +117,8 @@ function carregamentos = getCarregamentos()
   endif
 endfunction
 
+
+%{
 tamanhoViga = input("Digite o tamanho da viga: ");
 posicaoRolete = input("Digite o ponto aonde está o apoio do tipo rolete : ");
 posicaoPino = input("Digite o ponto aonde está o apoio do tipo pino : ");
@@ -124,6 +126,17 @@ forcas = getForcas()
 torques = getTorques()
 momentos = getMomentos()
 carregamentos = getCarregamentos()
+%}
+tamanhoViga = 20
+posicaoRolete = 15
+posicaoPino = 4
+forcas = [18,0,+13000]; # [x, fx, fy]
+ForcasExternas = [18,0,+13000]
+torques = zeros(0,2); # [x, intensidade]
+momentos = [10,4000]; # [x, intensidade
+carregamentos = zeros(0,3)
+
+
 
 ###############################################
 ######## CALCULOS PARA O PINO e ROLETE! ###########
@@ -222,7 +235,7 @@ for i = 2:rows(PontosDeInteresse) # começa em 2 pois o primeiro ponto de intere
   V_interior_parcial = [F_definidas_y + ForcaCarregamento];
   # Esta parte só serve caso exista um carregamento entre os pontos
   # de interesse, pois dessa forma desconheceremos o limite da integral
-  V_interior_carregamento_em_x =  carregamentos(carregamentos(:,2) == PontosDeInteresse(i),:);
+  V_interior_carregamento_em_x =  carregamentos(carregamentos(:,2)>=PontosDeInteresse(i) && carregamentos(:,1)<PontosDeInteresse(i),:);;
   
   ########################################################################################
   # Calculo M interno - M(interno)(x) = Mt(resultante) + (somatorio(x*carregamentos(x)))
@@ -236,7 +249,7 @@ for i = 2:rows(PontosDeInteresse) # começa em 2 pois o primeiro ponto de intere
 
    MomentoForcasExternas = 0;
   for j = 1:rows(forcas)
-    if forcas(j,1) < PontosDeInteresse(j)
+    if forcas(j,1) < PontosDeInteresse(i)
       MomentoForcasExternas = MomentoForcasExternas - forcas(j,3)*forcas(j,1)
     endif
   endfor
@@ -247,7 +260,7 @@ for i = 2:rows(PontosDeInteresse) # começa em 2 pois o primeiro ponto de intere
   M_interior_parcial = MomentoPontual + MomentoCarregamentos + MomentoForcasExternas;
   # Esta parte só serve caso exista um carregamento entre os pontos
   # de interesse, pois dessa forma desconheceremos o limite da integral
-  M_interior_carregamento_em_x = carregamentos(carregamentos(:,2) == PontosDeInteresse(i),:);
+  M_interior_carregamento_em_x =  carregamentos(carregamentos(:,2)>=PontosDeInteresse(i) && carregamentos(:,1)<PontosDeInteresse(i),:);;
   
   #####################################################
   # Calculo N interno - N(interno)(x) = Fx(resultante)
@@ -266,18 +279,18 @@ for i = 2:rows(PontosDeInteresse) # começa em 2 pois o primeiro ponto de intere
   # Criando valores de x no intervalo de dois pontos de interesse
 
   # TODO: MUDAR A DISTANCIA
-  X = transpose(linspace(0,tamanhoViga,tamanhoViga*20));
+   X = transpose(linspace(PontosDeInteresse(i-1),PontosDeInteresse(i),(PontosDeInteresse(i)-PontosDeInteresse(i-1))*4));  
   DadosDoDiagrama_V_x = zeros(rows(X), 1);
   DadosDoDiagrama_M_x = zeros(rows(X), 1);
   for j = 1:rows(X)
       printf("Ponto em x: %d\n", X(j))
 
     # Se existir carregamento entre os pontos de interesse a integral sera entre o ponto anterior e o x
-    if (sum(carregamentos(:,2)==PontosDeInteresse(i))==1) 
-      V_interior_carregamento_em_x(1) = carregamentos(carregamentos(:,2)==PontosDeInteresse(i),1); # posIni
+    if (sum(carregamentos(:,2)>=PontosDeInteresse(i) && carregamentos(:,1)<PontosDeInteresse(i))==1) 
+      V_interior_carregamento_em_x(1) = carregamentos(carregamentos(:,2)>=PontosDeInteresse(i) && carregamentos(:,1)<PontosDeInteresse(i),1); # posIni
       V_interior_carregamento_em_x(2) = X(j);  # posFim
       V_x = -1*(V_interior_parcial + calcForcaCarregamento(V_interior_carregamento_em_x));
-      M_interior_carregamento_em_x(1) = carregamentos(carregamentos(:,2)==PontosDeInteresse(i),1); # posIni
+      M_interior_carregamento_em_x(1) = carregamentos(carregamentos(:,2)>=PontosDeInteresse(i) && carregamentos(:,1)<PontosDeInteresse(i),1); # posIni
       M_interior_carregamento_em_x(2) = X(j) ; # posFim
       M_x = -1*(M_interior_parcial + calcMomentoCarregamento(M_interior_carregamento_em_x) - (V_x * X(j)));
     else

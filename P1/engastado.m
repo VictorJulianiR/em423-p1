@@ -121,20 +121,26 @@ function carregamentos = getCarregamentos()
   endif
 endfunction
 
-tamanhoViga = input("Digite o tamanho da viga: ");
+
+tamanhoViga = 20;
+forcas = zeros(0,3); # [x, fx, fy]
+ForcasExternas = zeros(0,3)
+torques = zeros(0,2); # [x, intensidade]
+momentos = zeros(0,2); # [x, intensidade
+carregamentos = [10,20,-160,800;0,10,0,-250]
+
 
 if tamanhoViga == 0
   error("Viga inexistente")
  endif
 
+
+%{
 forcas = getForcas();
 torques = getTorques();
 momentos = getMomentos();
 carregamentos = getCarregamentos();
 
-
-
-%{
 tamanhoViga = 3.8;
 forcas = [0.9,0,-54000;3.8,0,-40000;3.8,10000,0]; # [x, fx, fy]
 ForcasExternas = [0.9,0,-54000;3.8,0,-48000;3.8,10000,0];
@@ -183,8 +189,10 @@ printf("Torque: %.2f\n", torque);
 # 4. Equilibrio de momentos:
 momentoCarregamento = 0;
 for i = 1:rows(carregamentos) #Momento do carregamento distribuído
-  momentoCarregamento = momentoCarregamento + calcMomentoCarregamento(carregamentos(i,:));
+  xResultante = calcMomentoCarregamento(carregamentos(i,:))/calcForcaCarregamento(carregamentos(i,:));
+  momentoCarregamento = momentoCarregamento + xResultante*calcForcaCarregamento(carregamentos(i,:));
 endfor
+
 # Momentos externos
 momentoExterno = sum(momentos(:,2));
 #Momentos gerados pelas forças externas pontuais
@@ -237,7 +245,7 @@ for i = 2:rows(PontosDeInteresse) # começa em 2 pois o primeiro ponto de intere
   V_interior_parcial = [F_externas + ForcaApoioVertical + ForcaCarregamento];
   # Esta parte só serve caso exista um carregamento entre os pontos
   # de interesse, pois dessa forma desconheceremos o limite da integral
-  V_interior_carregamento_em_x =  carregamentos(carregamentos(:,2) == PontosDeInteresse(i),:);
+  V_interior_carregamento_em_x =  carregamentos(carregamentos(:,2)>=PontosDeInteresse(i) && carregamentos(:,1)<PontosDeInteresse(i),:);
   
   ########################################################################################
   # Calculo M interno - M(interno)(x) = Mt(resultante) + (somatorio(x*carregamentos(x)))
@@ -262,7 +270,7 @@ for i = 2:rows(PontosDeInteresse) # começa em 2 pois o primeiro ponto de intere
   M_interior_parcial = MomentoPontual + MomentoCarregamentos + MomentoApoio + MomentoForcasExternas;
   # Esta parte só serve caso exista um carregamento entre os pontos
   # de interesse, pois dessa forma desconheceremos o limite da integral
-  M_interior_carregamento_em_x = carregamentos(carregamentos(:,2) == PontosDeInteresse(i),:);
+  M_interior_carregamento_em_x = carregamentos(carregamentos(:,2)>=PontosDeInteresse(i) && carregamentos(:,1)<PontosDeInteresse(i),:);
 
   #####################################################
   # Calculo N interno - N(interno)(x) = Fx(resultante)
@@ -288,11 +296,11 @@ for i = 2:rows(PontosDeInteresse) # começa em 2 pois o primeiro ponto de intere
       printf("Ponto em x: %d\n", X(j))
 
     # Se existir carregamento entre os pontos de interesse a integral sera entre o ponto anterior e o x
-    if (sum(carregamentos(:,2)==PontosDeInteresse(i))==1) 
-      V_interior_carregamento_em_x(1) = carregamentos(carregamentos(:,2)==PontosDeInteresse(i),1); # posIni
+    if (sum(carregamentos(:,2)>=PontosDeInteresse(i) && carregamentos(:,1)<PontosDeInteresse(i))==1) 
+      V_interior_carregamento_em_x(1) = carregamentos(carregamentos(:,2)>=PontosDeInteresse(i) && carregamentos(:,1)<PontosDeInteresse(i),1); # posIni
       V_interior_carregamento_em_x(2) = X(j);  # posFim
       V_x = -1*(V_interior_parcial + calcForcaCarregamento(V_interior_carregamento_em_x));
-      M_interior_carregamento_em_x(1) = carregamentos(carregamentos(:,2)==PontosDeInteresse(i),1); # posIni
+      M_interior_carregamento_em_x(1) = carregamentos(carregamentos(:,2)>=PontosDeInteresse(i) && carregamentos(:,1)<PontosDeInteresse(i),1); # posIni
       M_interior_carregamento_em_x(2) = X(j) ; # posFim
       M_x = -1*(M_interior_parcial + calcMomentoCarregamento(M_interior_carregamento_em_x) - (V_x * X(j)));
     else
