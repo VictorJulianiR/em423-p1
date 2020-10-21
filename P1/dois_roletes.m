@@ -36,11 +36,9 @@ endfunction
 function momentoCarregamento = calcMomentoCarregamento(carregamento)
   ini = carregamento(1);
   fim = carregamento(2);
-  coefs = transpose(carregamento(3:end));
-  coefs = [coefs, 0]
-  integral = polyint(coefs)
-  teste3 = polyval(integral, fim)
-  teste4 = polyval(integral, ini)
+  coefs = (carregamento(3:end));
+  coefs = [coefs, 0];
+  integral = polyint(coefs);
   momentoCarregamento = (polyval(integral, fim) - polyval(integral, ini));
 endfunction
 
@@ -82,7 +80,7 @@ function forcasExternas = getForcas()
       pos = input("Posição: ");
       intensidade = input("Intensidade: ");
       
-      fy = intensidade
+      fy = intensidade;
       
       forcasExternas(i,:) = [pos;fy]
       
@@ -94,7 +92,10 @@ endfunction
 
 function carregamentos = getCarregamentos()
   numCarregamentos = input("Quantos carregamentos distribuídos estão sendo aplicados na viga: ");
+  n = input("Digite o grau máximo 'n' da função de carregamento: ")
   
+  carregamentos = zeros(numCarregamentos, n+3); # [posIni, posFim, coefs]
+
   if (numCarregamentos > 0)
     disp("");
     disp("Para cada carregamento, digite as suas posições inicial e final e sua função polinomial (em N/m)");
@@ -102,15 +103,14 @@ function carregamentos = getCarregamentos()
       disp(sprintf("Carregamento %d\n", i));
       posIni = input("Posição inicial: ");
       posFim = input("Posição final: ");
-      coefs = input("Coeficientes (seguindo o padrão) [an;an-1;...;a1;a0]:")
-      carregamentos(i) = horzcat([posIni],[posFim])
-      carregamentos(i) = horzcat(carregamentos(i),coefs)
+      coefs = input("Coeficientes (seguindo o padrão) [an;an-1;...;a1;a0]:");
+      
+      carregamentos(i, :) = [posIni;posFim;coefs];
       
       disp("Carregamento computado com sucesso.");
     endfor
   endif
 endfunction
-
 
 %{
 tamanhoViga = 3.8;
@@ -154,7 +154,6 @@ forcas = [5,-7000];
 momentos = zeros(0,2); # [x, intensidade
 carregamentos = [10,20,[-160;0]];
 
-%}
 
 tamanhoViga = input("Digite o tamanho da viga: ");
 pos_rolete_A = input ("Digite a posição do rolete 1: ");
@@ -164,6 +163,13 @@ momentos = getMomentos()
 carregamentos = getCarregamentos()
 
 
+%}
+tamanhoViga = input("Digite o tamanho da viga: ");
+pos_rolete_A = input ("Digite a posição do rolete 1: ");
+pos_rolete_B = input ("Digite a posição do rolete 2: ");
+forcas = getForcas()
+momentos = getMomentos()
+carregamentos = getCarregamentos()
 
 
 
@@ -179,11 +185,11 @@ printf("Fx: %f\n", fx);
 # 2. Equilibrio de forças na vertical:
 forcaCarregamento = 0;
 for i = 1:rows(carregamentos) #Forças de carregamento distribuído
-  forcaCarregamento = forcaCarregamento + calcForcaCarregamento(carregamentos(i,:));
+  forcaCarregamento = forcaCarregamento + calcForcaCarregamento(carregamentos(i,:))
 endfor
 
 
-fy = forcaCarregamento + sum(forcas(:,2)) #Forças pontuais
+fy = forcaCarregamento + sum(forcas(:,2)); #Forças pontuais
 #fy = -fy #verificar tbm nos outros exe de apoio. Essa converção não é necessaria colocando o angulo correto.
 printf("Fy: %f\n", fy);
 
@@ -195,48 +201,49 @@ printf("Torque: %f\n", torque);
 # 4. Equilibrio de momentos:
 #Será escolhido o ponto de referencia sempre o rolete mais a esquerda.
 if (pos_rolete_A < pos_rolete_B)
-  pontoReferenciaMomento = pos_rolete_A
+  pontoReferenciaMomento = pos_rolete_A;
 else
-  pontoReferenciaMomento = pos_rolete_B
+  pontoReferenciaMomento = pos_rolete_B;
 endif
 
 # Momentos externos
 momentoExterno = sum(momentos(:,2));
 
 # Momento Carregamento
-momentoCarregamento = 0
-colunaCarregamento = rows(carregamentos)
+momentoCarregamento = 0;
+colunaCarregamento = rows(carregamentos);
 for i = 1:rows(carregamentos) #Momento do carregamento distribuído
-  xResultante = calcMomentoCarregamento(carregamentos(i,:))/calcForcaCarregamento(carregamentos(i,:))
+  momentoTeste = calcMomentoCarregamento(carregamentos(i,:));
+  xResultante = calcMomentoCarregamento(carregamentos(i,:))/calcForcaCarregamento(carregamentos(i,:)) ;
   if xResultante < pontoReferenciaMomento
-    momentoCarregamento = momentoCarregamento + abs(pontoReferenciaMomento-xResultante)*calcForcaCarregamento(carregamentos(i,:))
+    momentoCarregamento = momentoCarregamento + abs(pontoReferenciaMomento-xResultante)*calcForcaCarregamento(carregamentos(i,:));
   else
-    momentoCarregamento = momentoCarregamento - abs(pontoReferenciaMomento-xResultante)*calcForcaCarregamento(carregamentos(i,:))
+    momentoCarregamento = momentoCarregamento - abs(pontoReferenciaMomento-xResultante)*calcForcaCarregamento(carregamentos(i,:));
   endif
 endfor
 
 # Momento Forcas
-momentoForcas = 0
+momentoForcas = 0;
 for i = 1:rows(forcas) #Momento do carregamento distribuído
   if forcas(i,1) < pontoReferenciaMomento
-    momentoForcas = momentoForcas + forcas(i,2)*abs(forcas(i,1)-pontoReferenciaMomento)
+    momentoForcas = momentoForcas + forcas(i,2)*abs(forcas(i,1)-pontoReferenciaMomento);
   elseif forcas(i,1) > pontoReferenciaMomento
-    momentoForcas = momentoForcas - forcas(i,2)*abs(forcas(i,1)-pontoReferenciaMomento)
+    momentoForcas = momentoForcas - forcas(i,2)*abs(forcas(i,1)-pontoReferenciaMomento);
   endif
 endfor
-momentoForcas
 
 
-momentoTotal = momentoForcas + momentoCarregamento + momentoExterno
+
+momentoTotal = momentoForcas + momentoCarregamento + momentoExterno;
 
 
 #Forças de apoio
 if (pos_rolete_A < pos_rolete_B)
-  Fyb = (momentoTotal)/(pos_rolete_B-pos_rolete_A)
-  Fya = -1*(Fyb + fy) 
+  Fyb = (momentoTotal)/(pos_rolete_B-pos_rolete_A);
+  Fya = -1*(Fyb + fy) ;
 else
-  Fya = (momentoTotal) / (pos_rolete_A-pos_rolete_B)
-  Fyb = -1*(Fya + fy) 
+  Fya = (momentoTotal) / (pos_rolete_A-pos_rolete_B);
+  Fyb = -1*(Fya + fy);
 endif
 
 printf("Força de apoio para o relote 1: %f\n", Fya);
@@ -258,7 +265,7 @@ for i = 2:rows(PontosDeInteresse) # começa em 2 pois o primeiro ponto de intere
   ####################################################################################
   # Calculo V interno  V(interno)(x) = Fy(resultante) - (somatorio(carregamentos(x)))
   ####################################################################################
-  F_externas = sum(forcas(forcas(:,1) < PontosDeInteresse(i),:)(:,2)) #foças precisam estar no intervalo (0.0,pontoDeINnteresse(i))
+  F_externas = sum(forcas(forcas(:,1) < PontosDeInteresse(i),:)(:,2)); #foças precisam estar no intervalo (0.0,pontoDeINnteresse(i))
   # Existe a possibilidade de ter dois tipos de carregamentos aqui:
     # -- Dado um intervalo de pontos de interesse, ao fazermos a secção e pegarmos 
     # -- a figura  com referencial 0(lado esquerdo), há a possibilidade de haver 
@@ -285,22 +292,22 @@ for i = 2:rows(PontosDeInteresse) # começa em 2 pois o primeiro ponto de intere
   ########################################################################################
   # Calculo M interno - M(interno)(x) = Mt(resultante) + (somatorio(x*carregamentos(x)))
   ########################################################################################
-  MomentoPontual = sum(momentos(momentos(:,1) < PontosDeInteresse(i),:)(:,2)) # momentos precisam estar no intervalo (0.0,pontoAtual)
+  MomentoPontual = sum(momentos(momentos(:,1) < PontosDeInteresse(i),:)(:,2)); # momentos precisam estar no intervalo (0.0,pontoAtual)
   MomentoCarregamentos = 0;
   for j = 1:rows(CarregamentosIntegraveis) #Momento do carregamento distribuído
     MomentoCarregamentos = MomentoCarregamentos + calcMomentoCarregamento(CarregamentosIntegraveis(j,:));
   endfor
-  momentoCarregamento
+  
 
 
-  ForcasExistentes = forcas(forcas(:,1) < PontosDeInteresse(i),:)
+  ForcasExistentes = forcas(forcas(:,1) < PontosDeInteresse(i),:);
   MomentoForcasExternas = 0;
   for j = 1:rows(ForcasExistentes)
   
-    MomentoForcasExternas = MomentoForcasExternas - ForcasExistentes(j,2)*ForcasExistentes(j,1)
+    MomentoForcasExternas = MomentoForcasExternas - ForcasExistentes(j,2)*ForcasExistentes(j,1);
   
   endfor
-  MomentoForcasExternas
+  
 
   # M interior será calculado posteriormente quando tivermos os valores de x para a integral.
   # Este momento interno ainda não considera o momento gerado pelo V interno
