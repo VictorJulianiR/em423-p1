@@ -2,12 +2,15 @@ clear;
 clc;
 disp("#####################################################################");
 disp("REFERENCIAIS/CONVENÇÕES:");
-disp("1a. Forças verticais são positivas no sentido do eixo Y.");
-disp("1b. Forças horizontais são positivas no sentido do eixo X.");
-disp("1c. Torques são positivos no sentido do eixo X.");
-disp("1d. Momentos são positivos no sentido anti-horário.");
+disp("1a. Forças verticais são positivas no sentido positivo do eixo Y (de baixo para cima).");
+disp("1b. Forças horizontais são positivas no sentido positivo do eixo X (da esquerda para direita).");
+disp("Por exemplo, para marcar forças pontuais que são: verticais para cima: usa-se angulo 90; verticais para baixo: usa-se angulo 270; horizontais para direita: usa-se angulo 0; horizontais para esquerda: usa-se angulo 180")
+disp("1c. Torques são positivos no sentido positivo do eixo X (para a direita).");
+disp("1d. Momentos são positivos no sentido horário.");
+disp("1e. Caso forças de carregamento estejam sobrepostas, cabe ao usário fazer a devida soma das funções, separando-o em mais de um carregamento caso seja necessário")
+disp("1f. Como adotamos refencial de forças de cima pra baixo como negativo, carregamentos que atuem em cima da barra devem ter valor de sua função negativa")
 disp("");
-disp("2. Os referencias são adotados todos a partir do início da viga (ou seja, posição 0)")
+disp("2. Os referencias são adotados todos a partir do início da viga, ou seja, posição (0,0)");
 disp("");
 disp("3. Todas as unidades devem estar no SI menos os ângulos que estão em graus");
 disp("#####################################################################\n");
@@ -64,7 +67,7 @@ function torques = getTorques()
     disp("Para cada torque, digite sua posição e sua intensidade - lembrando que se a intensidade é negativa, o torque � tido no sentido oposto do eixo X.");
     for i = 1:numTorques
       disp(sprintf("Torque %d\n", i));
-      pos = input("Posição: ");#precisamos da posicao ?
+      pos = input("Posição: ");
       intensidade = input("Intensidade: ");
       
       torques(i, :) = [pos;intensidade]
@@ -84,7 +87,7 @@ function momentos = getMomentos()
     disp("Para cada momento, digite sua posição e sua intensidade - lembrando que se a intensidade é negativa, o momento � tido no sentido hor�rio.");
     for i = 1:numMomentos
       disp(sprintf("Momento %d\n", i));
-      pos = input("Posição: ");#precisamos de posicao ?
+      pos = input("Posição: ");
       intensidade = input("Intensidade: ");
       
       momentos(i, :) = [pos;intensidade]
@@ -117,8 +120,10 @@ function carregamentos = getCarregamentos()
   endif
 endfunction
 
+###############################################
+######## ENTRADAS! ###########
+###############################################
 
-%{
 tamanhoViga = input("Digite o tamanho da viga: ");
 posicaoRolete = input("Digite o ponto aonde está o apoio do tipo rolete : ");
 posicaoPino = input("Digite o ponto aonde está o apoio do tipo pino : ");
@@ -126,17 +131,6 @@ forcas = getForcas()
 torques = getTorques()
 momentos = getMomentos()
 carregamentos = getCarregamentos()
-%}
-tamanhoViga = 20
-posicaoRolete = 15
-posicaoPino = 4
-forcas = [18,0,+13000]; # [x, fx, fy]
-ForcasExternas = [18,0,+13000]
-torques = zeros(0,2); # [x, intensidade]
-momentos = [10,4000]; # [x, intensidade
-carregamentos = zeros(0,3)
-
-
 
 ###############################################
 ######## CALCULOS PARA O PINO e ROLETE! ###########
@@ -211,7 +205,7 @@ g = figure ();
 for i = 2:rows(PontosDeInteresse) # começa em 2 pois o primeiro ponto de interesse sempre sera 0.0
   printf("Ponto de interesse: %d\n", i)
   ####################################################################################
-  # Calculo V interno  V(interno)(x) = Fy(resultante) - (somatorio(carregamentos(x)))
+  # Calculo V interno  
   ####################################################################################
   F_definidas_y = sum(forcas(forcas(:,1) < PontosDeInteresse(i),:)(:,3)); #foças precisam estar no intervalo (0.0,pontoDeINnteresse(i))
   # Existe a possibilidade de ter dois tipos de carregamentos aqui:
@@ -238,7 +232,7 @@ for i = 2:rows(PontosDeInteresse) # começa em 2 pois o primeiro ponto de intere
   V_interior_carregamento_em_x =  carregamentos(carregamentos(:,2)>=PontosDeInteresse(i) && carregamentos(:,1)<PontosDeInteresse(i),:);;
   
   ########################################################################################
-  # Calculo M interno - M(interno)(x) = Mt(resultante) + (somatorio(x*carregamentos(x)))
+  # Calculo M interno 
   ########################################################################################
   MomentoPontual = sum(momentos(momentos(:,1) < PontosDeInteresse(i),:)(:,2)); # momentos precisam estar no intervalo (0.0,pontoAtual)
   MomentoCarregamentos = 0;
@@ -263,12 +257,12 @@ for i = 2:rows(PontosDeInteresse) # começa em 2 pois o primeiro ponto de intere
   M_interior_carregamento_em_x =  carregamentos(carregamentos(:,2)>=PontosDeInteresse(i) && carregamentos(:,1)<PontosDeInteresse(i),:);;
   
   #####################################################
-  # Calculo N interno - N(interno)(x) = Fx(resultante)
+  # Calculo N interno 
   #####################################################
   N_interior = - sum(forcas(forcas(:,1) < PontosDeInteresse(i),:)(:,2)); #foças precisam estar no intervalo (0.0,pontoAtual)
 
   #####################################################
-  # Calculo T interno - T(interno)(x) = Tr(resultante)
+  # Calculo T interno 
   #####################################################
   T_interior = - sum(torques(torques(:,1) < PontosDeInteresse(i),:)(:,2)); #foças precisam estar no intervalo (0.0,pontoAtual)
   
@@ -278,14 +272,11 @@ for i = 2:rows(PontosDeInteresse) # começa em 2 pois o primeiro ponto de intere
   
   # Criando valores de x no intervalo de dois pontos de interesse
 
-  # TODO: MUDAR A DISTANCIA
-   X = transpose(linspace(PontosDeInteresse(i-1),PontosDeInteresse(i),(PontosDeInteresse(i)-PontosDeInteresse(i-1))*4));  
+  X = transpose(linspace(PontosDeInteresse(i-1),PontosDeInteresse(i),(PontosDeInteresse(i)-PontosDeInteresse(i-1))*4));  
   DadosDoDiagrama_V_x = zeros(rows(X), 1);
   DadosDoDiagrama_M_x = zeros(rows(X), 1);
   for j = 1:rows(X)
-      printf("Ponto em x: %d\n", X(j))
 
-    # Se existir carregamento entre os pontos de interesse a integral sera entre o ponto anterior e o x
     if (sum(carregamentos(:,2)>=PontosDeInteresse(i) && carregamentos(:,1)<PontosDeInteresse(i))==1) 
       V_interior_carregamento_em_x(1) = carregamentos(carregamentos(:,2)>=PontosDeInteresse(i) && carregamentos(:,1)<PontosDeInteresse(i),1); # posIni
       V_interior_carregamento_em_x(2) = X(j);  # posFim
@@ -298,11 +289,7 @@ for i = 2:rows(PontosDeInteresse) # começa em 2 pois o primeiro ponto de intere
       M_x = -1*(M_interior_parcial - (V_x * X(j)));
     endif
 
-    printf("V_x: %d\n", V_x)
-    printf("M_x: %d\n", M_x)
-        
-    
-    #printf(DadosDoDiagrama_V_x(j));
+            
     DadosDoDiagrama_V_x(j) = [V_x];
     DadosDoDiagrama_M_x(j) = [M_x];
   endfor   
@@ -313,7 +300,7 @@ for i = 2:rows(PontosDeInteresse) # começa em 2 pois o primeiro ponto de intere
   hold on;
   xlabel ("x");
   ylabel ("V(x)");
-  title ("Forcas de corte");
+  title ("Esforço cortante");
   plot(X,DadosDoDiagrama_V_x);
   hold off;     
   
@@ -321,7 +308,7 @@ for i = 2:rows(PontosDeInteresse) # começa em 2 pois o primeiro ponto de intere
   hold on;
   xlabel ("x");
   ylabel ("M(x)");
-  title ("Momento interno");
+  title ("Momento fletor");
   plot(X,DadosDoDiagrama_M_x);
   hold off;
 endfor
