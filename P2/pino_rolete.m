@@ -259,7 +259,7 @@ if (fx_pino)
   forcas = [forcas;[posicaoPino,fx_pino,0]];
 endif
 if (torque)
-  torques = [torque;[posicaoPino,torque]];
+  torques = [torques;[posicaoPino,torque]];
 endif
 
 function f_final = integral_de_singularidade(f)
