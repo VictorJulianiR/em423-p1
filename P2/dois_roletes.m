@@ -15,6 +15,39 @@ disp("");
 disp("3. Todas as unidades devem estar no SI menos os ângulos que estão em graus");
 disp("#####################################################################\n");
 
+
+function moduloElasticidade = getModuloElasticidade()
+    moduloElasticidade = input("Insira o modulo de elasticidade");
+endfunction
+
+function moduloCisalhamento = getModuloCisalhamento()
+    moduloCisalhamento = input("Insira o modulo de cisalhamento");
+endfunction
+
+function infoFormato = getFormato()
+    formato = input("Insira o numero correspondente ao formato da barra. 1 - Retangular. 2 - Circulo. 3 - Coroa circular.");
+    if(formato == 1)
+      b = input("Insira o valor da largura em metros.");
+      h = input("Insira o valor da altura em metros.");
+      momentoIneriaPolarEmZ = (b*(power(h,3)))/2;
+      momentoIneriaPolarEmY = (h*(power(b,3)))/2;
+      momentoInerciaPolar = momentoIneriaPolarEmZ + momentoIneriaPolarEmY;
+      areaTransversal = h*b
+    elseif(formato == 2)
+      d = input("Insira o valor do diametro em metros.");
+      momentoInerciaPolar = (2 * (3.14 * (power(d,4))))/64;
+      areaTransversal = 3.14*(power(d/2,2));
+    else
+      d_e = input("Insira o valor do diametro externo em metros.");
+      d_i = input("Insira o valor do diametro interno em metros.");
+      momentoInerciaPolar = (2 * (3.14 * ((power(d_e,4))-(power(d_i,4)))))/64;
+      areaTransversal = 3.14*(power(d_e/2,2)) - 3.14*(power(d_i/2,2));
+    endif
+
+    infoFormato = [momentoInerciaPolar,areaTransversal];
+endfunction
+
+
 function forcaCarregamento = calcForcaCarregamento(carregamento)
   ini = carregamento(1);
   fim = carregamento(2);
@@ -196,92 +229,174 @@ printf("Força de apoio para o rolete 2: %f\n", Fyb);
 # Pontos de interesse
 # Sempre escolhemos o lado esquerdo da secção para encontar as forças solicitantes,
 # pois ele tem o ponto considerado o nosso referencial 0.
+if (Fya)
+  forcas = [forcas;[pos_rolete_A,0,Fya]];
+endif
+if (Fyb)
+  forcas = [forcas;[pos_rolete_B,0,Fyb]];
+endif
+if (torque)
+  torques = [torques;[0,torque]];
+endif
+if(momento)
+  momentos = [momentos;[0,momento]]
+endif
 
-PontosDeInteresse = [unique(vertcat(pos_rolete_A,pos_rolete_B,forcas(:,1),momentos(:,1),carregamentos(:,1),carregamentos(:,2)))]
-forcas = [forcas; pos_rolete_A, Fya];
-forcas = [forcas; pos_rolete_B, Fyb]; 
-g = figure ();
-for i = 2:rows(PontosDeInteresse) # começa em 2 pois o primeiro ponto de interesse sempre sera 0.0
-  printf("Ponto de interesse: %d\n", i)
-  ####################################################################################
-  # Calculo V interno 
-  ####################################################################################
-  F_externas = sum(forcas(forcas(:,1) < PontosDeInteresse(i),:)(:,2)); #foças precisam estar no intervalo (0.0,pontoDeINnteresse(i))
-  CarregamentosIntegraveis = carregamentos(carregamentos(:,2)<= PontosDeInteresse(i-1),:);
-  ForcaCarregamento = 0;
-  for j = 1:rows(CarregamentosIntegraveis)
-    ForcaCarregamento = ForcaCarregamento + calcForcaCarregamento(CarregamentosIntegraveis(j,:));
+function f_final = integral_de_singularidade(f)
+  f_final = f;
+  for i = 1:rows(f)
+    if f_final(i,3) < 1
+      f_final(i,3) = f_final(i,3) + 1;
+    else
+      f_final(i,3) = f_final(i,3) + 1;
+      f_final(i,1) = f_final(i,1)/f_final(i,3);
+    endif
   endfor
-  # V interior será calculado posteriormente quando tivermos os valores de x para a integral
-  # caso exista carregamento.
-  V_interior_parcial = [F_externas + ForcaCarregamento];
-  # Esta parte só serve caso exista um carregamento entre os pontos
-  # de interesse, pois dessa forma desconheceremos o limite da integral
-  V_interior_carregamento_em_x =  carregamentos(carregamentos(:,2)>=PontosDeInteresse(i) && carregamentos(:,1)<PontosDeInteresse(i),:);
-  
-  ########################################################################################
-  # Calculo M interno 
-  ########################################################################################
-  MomentoPontual = sum(momentos(momentos(:,1) < PontosDeInteresse(i),:)(:,2)); # momentos precisam estar no intervalo (0.0,pontoAtual)
-  MomentoCarregamentos = 0;
-  for j = 1:rows(CarregamentosIntegraveis) #Momento do carregamento distribuído
-    MomentoCarregamentos = MomentoCarregamentos + calcMomentoCarregamento(CarregamentosIntegraveis(j,:));
+endfunction
+
+function resultado = resolve_equacao(f,x)
+  resultado = 0;
+  for i = 1:rows(f)
+    if f(i,3) <= -1
+      continue;
+    elseif x < f(i,2) 
+      continue;
+    else
+      resultado = resultado + (f(i,1)*((x - f(i,2))^f(i,3)));
+    endif
   endfor
-  
+endfunction
 
 
-  ForcasExistentes = forcas(forcas(:,1) < PontosDeInteresse(i),:);
-  MomentoForcasExternas = 0;
-  for j = 1:rows(ForcasExistentes)
-  
-    MomentoForcasExternas = MomentoForcasExternas - ForcasExistentes(j,2)*ForcasExistentes(j,1);
-  
+PontosDeInteresse = [unique(vertcat(0.0,forcas(:,1),momentos(:,1),carregamentos(:,1),torques(:,1)))]
+
+
+
+# q(x) = [intensidade, inicio, expoente; ...]
+q = [];
+for i = 1:rows(forcas)
+  if forcas(i,3) != 0
+    q = [q;[forcas(i,3),forcas(i,1),-1]];
+  endif
+endfor
+for i = 1:rows(momentos)
+  q = [q;[momentos(i,2),momentos(i,1),-2]];
+endfor
+for i = 1:rows(carregamentos)
+  coefs = carregamentos(i,3:end);
+  for j = 1:columns(coefs)
+    if coefs(j) != 0
+      q = [q;[coefs(j),carregamentos(i,1),columns(coefs)-j]];
+    endif
   endfor
-  
+endfor
 
-  # M interior será calculado posteriormente quando tivermos os valores de x para a integral.
-  # Este momento interno ainda não considera o momento gerado pelo V interno
-  # Este MomentoCarregamento são aqueles gerados por carregamentos anteriores ao ponto de interesse anterior. 
-  M_interior_parcial = MomentoPontual + MomentoCarregamentos + MomentoForcasExternas;
-  # Esta parte só serve caso exista um carregamento entre os pontos
-  # de interesse, pois dessa forma desconheceremos o limite da integral
-  M_interior_carregamento_em_x = carregamentos(carregamentos(:,2)>=PontosDeInteresse(i) && carregamentos(:,1)<PontosDeInteresse(i),:);
-  
-  ####################################################################
-  # Calculo dos valores da tabela necessario para montar o diagrama
-  ####################################################################
-  
+# f_x = [intensidade, inicio, expoente; ...]
+f_x = [];
+for i = 1:rows(forcas)
+  if forcas(i,2) != 0
+    f_x = [f_x;[forcas(i,2),forcas(i,1),-1]];
+  endif
+endfor
+f_x
+
+#t(x) = [intensidade, inicio, expoente; ...]
+t = [];
+for i = 1:rows(torques)
+  t = [t;[torques(i,2),torques(i,1),-1]];
+endfor
+torques
+t
+
+
+#V(x) = integral_de_singularidade(q) = [intensidade, inicio, expoente; ...]
+V_x = integral_de_singularidade(q)
+M_x = integral_de_singularidade(V_x)
+Teta_x = integral_de_singularidade(M_x)
+v_x = integral_de_singularidade(Teta_x)
+
+N_x = integral_de_singularidade(f_x)
+L_x = integral_de_singularidade(N_x)
+
+T_x = integral_de_singularidade(t)
+TORCAO_x = integral_de_singularidade(T_x)
+
+constanteTETA = 0
+constanteV = -(resolve_equacao(v_x,pos_rolete_A-0.01))
+constanteL = 0
+constanteTORCAO = 0
+
+
+####################################################################
+# Calculo dos valores da tabela necessario para montar o diagrama
+####################################################################
+for i = 2:rows(PontosDeInteresse)  
   # Criando valores de x no intervalo de dois pontos de interesse
-
-  X = transpose(linspace(PontosDeInteresse(i-1),PontosDeInteresse(i),(PontosDeInteresse(i)-PontosDeInteresse(i-1))*4));  
+  X = transpose(linspace(PontosDeInteresse(i-1),PontosDeInteresse(i),max((PontosDeInteresse(i)-PontosDeInteresse(i-1))*4,2)));
+  Xizao = linspace(PontosDeInteresse(i-1),PontosDeInteresse(i),(PontosDeInteresse(i)-PontosDeInteresse(i-1))*4)
   DadosDoDiagrama_V_x = zeros(rows(X), 1);
   DadosDoDiagrama_M_x = zeros(rows(X), 1);
-  for j = 1:rows(X)
+  DadosDoDiagrama_N_x = zeros(rows(X), 1);
+  DadosDoDiagrama_T_x = zeros(rows(X), 1);
+  DadosDoDiagrama_TETA_x = zeros(rows(X), 1) + constanteTETA;
+  DadosDoDiagrama_v_x = zeros(rows(X), 1) + constanteV;
+  DadosDoDiagrama_L_x = zeros(rows(X), 1) + constanteL;
+  DadosDoDiagrama_TORCAO_x = zeros(rows(X), 1) + constanteTORCAO;
 
-    # Se existir carregamento entre os pontos de interesse a integral sera entre o ponto anterior e o x
-    if (sum(carregamentos(:,2)>=PontosDeInteresse(i) && carregamentos(:,1)<PontosDeInteresse(i))==1)
-      V_interior_carregamento_em_x(1) = carregamentos(carregamentos(:,2)>=PontosDeInteresse(i) && carregamentos(:,1)<PontosDeInteresse(i),1); # posIni
-      V_interior_carregamento_em_x(2) = X(j);  # posFim
-  
-      
-      V_x = -1*(V_interior_parcial + calcForcaCarregamento(V_interior_carregamento_em_x));
-      M_interior_carregamento_em_x(1) = carregamentos(carregamentos(:,2)>=PontosDeInteresse(i) && carregamentos(:,1)<PontosDeInteresse(i),1); # posIni
-      M_interior_carregamento_em_x(2) = X(j) ; # posFim
-      M_x = (-1*M_interior_parcial + calcMomentoCarregamento(M_interior_carregamento_em_x) + (V_x * X(j)));
+
+  for j = 1:rows(X)
+    x = X(j)
+    if j == 1
+      V = resolve_equacao(V_x, X(j)+0.01);
+      M = resolve_equacao(M_x, X(j)+0.01);
+      N = resolve_equacao(N_x, X(j)+0.01);
+      T = resolve_equacao(T_x, X(j)+0.01)
+      TETA = (resolve_equacao(Teta_x,X(j)+0.01)) * (1/(moduloElasticidade*infoFormato(1)));
+      v = (resolve_equacao(v_x,X(j)+0.01)) * (1/(moduloElasticidade*infoFormato(1)));
+      L = (resolve_equacao(L_x,X(j)+0.01)) * (1/(moduloElasticidade*infoFormato(2)));
+      TORCAO = (resolve_equacao(TORCAO_x,X(j)+0.01)) * (1/(moduloCisalhamento*infoFormato(1)));
+
+    elseif j == rows(X)
+      V = resolve_equacao(V_x, X(j)-0.01);
+      M = resolve_equacao(M_x, X(j)-0.01);
+      N = resolve_equacao(N_x, X(j)-0.01);
+      T = resolve_equacao(T_x, X(j)-0.01)
+      TETA = resolve_equacao(Teta_x,X(j)-0.01) * (1/(moduloElasticidade*infoFormato(1)));
+      v = resolve_equacao(v_x,X(j)-0.01) * (1/(moduloElasticidade*infoFormato(1)));
+      L = resolve_equacao(L_x,X(j)-0.01) * (1/(moduloElasticidade*infoFormato(2)));
+      TORCAO = resolve_equacao(TORCAO_x,X(j)-0.01) * (1/(moduloCisalhamento*infoFormato(1)));
+
+
     else
-      V_x = -1*V_interior_parcial; 
-      M_x = -1*(M_interior_parcial - (V_x * X(j)));
+      V = resolve_equacao(V_x, X(j));
+      M = resolve_equacao(M_x, X(j));
+      N = resolve_equacao(N_x, X(j));
+      T = resolve_equacao(T_x, X(j))
+      TETA = resolve_equacao(Teta_x,X(j)) * (1/(moduloElasticidade*infoFormato(1)));
+      v = resolve_equacao(v_x,X(j)) * (1/(moduloElasticidade*infoFormato(1)));
+      L = resolve_equacao(L_x,X(j)) * (1/(moduloElasticidade*infoFormato(2)));
+      TORCAO = resolve_equacao(TORCAO_x,X(j)) * (1/(moduloCisalhamento*infoFormato(1)));
+  
     endif
 
-    
+        
     #printf(DadosDoDiagrama_V_x(j));
-    DadosDoDiagrama_V_x(j) = [V_x];
-    DadosDoDiagrama_M_x(j) = [M_x];
-  endfor   
+    DadosDoDiagrama_V_x(j) = [V];
+    DadosDoDiagrama_M_x(j) = [M];
+    DadosDoDiagrama_N_x(j) = [N];
+    DadosDoDiagrama_T_x(j) = [T];
+    DadosDoDiagrama_TETA_x(j) = [TETA];
+    DadosDoDiagrama_v_x(j) = [v];
+    DadosDoDiagrama_L_x(j) = [L];
+    DadosDoDiagrama_TORCAO_x(j) = [TORCAO];
+
+
+  endfor 
+  printf("aaaaaaaaaaaaaaaaaaaaaaaaaaa")
   # plot da função para cada intervalo dos pontos de interesse
   
 
-  subplot(2,1,1);
+  subplot(4,2,1);
   hold on;
   xlabel ("x");
   ylabel ("V(x)");
@@ -289,12 +404,60 @@ for i = 2:rows(PontosDeInteresse) # começa em 2 pois o primeiro ponto de intere
   plot(X,DadosDoDiagrama_V_x);
   hold off;     
   
-  subplot(2,1,2);
+  subplot(4,2,2);
   hold on;
   xlabel ("x");
   ylabel ("M(x)");
-  title ("Momento Fletor");
+  title ("Momento fletor");
   plot(X,DadosDoDiagrama_M_x);
+  hold off;
+
+  subplot(4,2,3);
+  hold on;
+  xlabel ("x");
+  ylabel ("N(x)");
+  title ("Forças normais");
+  plot(X,DadosDoDiagrama_N_x);
+  hold off;
+
+  subplot(4,2,4);
+  hold on;
+  xlabel ("x");
+  ylabel ("T(x)");
+  title ("Torques internos");
+  plot(X,DadosDoDiagrama_T_x);
+  hold off;
+
+  subplot(4,2,5);
+  hold on;
+  xlabel ("x");
+  ylabel ("0(x)");
+  title ("Inclinação");
+  plot(X,DadosDoDiagrama_TETA_x);
+  hold off;
+
+  subplot(4,2,6);
+  hold on;
+  xlabel ("x");
+  ylabel ("v(x)");
+  title ("Deflexao");
+  plot(X,DadosDoDiagrama_v_x);
+  hold off;
+
+  subplot(4,2,7);
+  hold on;
+  xlabel ("x");
+  ylabel ("L(x)");
+  title ("Alongamento");
+  plot(X,DadosDoDiagrama_L_x);
+  hold off;
+
+  subplot(4,2,8);
+  hold on;
+  xlabel ("x");
+  ylabel ("Torcao(x)");
+  title ("Angulo de Torcao");
+  plot(X,DadosDoDiagrama_TORCAO_x);
   hold off;
 endfor
 print diagramaForcasSolicitantes.pdf;
