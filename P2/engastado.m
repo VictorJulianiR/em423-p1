@@ -173,15 +173,15 @@ if tamanhoViga == 0
 endif
 %}
 
-tamanhoViga = 1;
+tamanhoViga = 6;
 momentos = zeros(0,2);
-forcas = zeros(0,3);
-carregamentos = zeros(0,3);
-torques = [0.4,3000;1,-2000];
+forcas = [4.5,0,-4000;6,0,-6000]
+carregamentos = [0,3,-2000]
+torques = zeros(0,2);
 momentos = zeros(0,2);
-infoFormato = [ 6.14*power(10,-7),1];
-moduloElasticidade = 1;
-moduloCisalhamento = 63.4 * power(10,9);
+infoFormato = [ 1.04*power(10,-3),0.08];
+moduloElasticidade = 12* power(10,9);
+moduloCisalhamento = 1;
 
 
 ###############################################
@@ -271,7 +271,7 @@ function resultado = resolve_equacao(f,x)
 endfunction
 
 
-PontosDeInteresse = [unique(vertcat(0.0,forcas(:,1),momentos(:,1),carregamentos(:,1),torques(:,1)))]
+PontosDeInteresse = [unique(vertcat(0.0,forcas(:,1),momentos(:,1),carregamentos(:,1),carregamentos(:,2),torques(:,1)))]
 
 
 
@@ -313,6 +313,7 @@ t
 
 
 #V(x) = integral_de_singularidade(q) = [intensidade, inicio, expoente; ...]
+q
 V_x = integral_de_singularidade(q)
 M_x = integral_de_singularidade(V_x)
 Teta_x = integral_de_singularidade(M_x)
@@ -348,9 +349,9 @@ for i = 2:rows(PontosDeInteresse)
 
 
   for j = 1:rows(X)
-    x = X(j)
+    x = X(j);
     if j == 1
-      V = resolve_equacao(V_x, X(j)+0.01);
+      V = resolve_equacao(V_x, X(j)+0.01)
       M = resolve_equacao(M_x, X(j)+0.01);
       N = resolve_equacao(N_x, X(j)+0.01);
       T = resolve_equacao(T_x, X(j)+0.01)
@@ -360,10 +361,10 @@ for i = 2:rows(PontosDeInteresse)
       TORCAO = (resolve_equacao(TORCAO_x,X(j)+0.01)) * (1/(moduloCisalhamento*infoFormato(1)));
 
     elseif j == rows(X)
-      V = resolve_equacao(V_x, X(j)-0.01);
+      V = resolve_equacao(V_x, X(j)-0.01)
       M = resolve_equacao(M_x, X(j)-0.01);
       N = resolve_equacao(N_x, X(j)-0.01);
-      T = resolve_equacao(T_x, X(j)-0.01)
+      T = resolve_equacao(T_x, X(j)-0.01);
       TETA = resolve_equacao(Teta_x,X(j)-0.01) * (1/(moduloElasticidade*infoFormato(1)));
       v = resolve_equacao(v_x,X(j)-0.01) * (1/(moduloElasticidade*infoFormato(1)));
       L = resolve_equacao(L_x,X(j)-0.01) * (1/(moduloElasticidade*infoFormato(2)));
@@ -371,7 +372,7 @@ for i = 2:rows(PontosDeInteresse)
 
 
     else
-      V = resolve_equacao(V_x, X(j));
+      V = resolve_equacao(V_x, X(j))
       M = resolve_equacao(M_x, X(j));
       N = resolve_equacao(N_x, X(j));
       T = resolve_equacao(T_x, X(j))
