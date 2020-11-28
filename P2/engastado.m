@@ -30,22 +30,24 @@ function infoFormato = getFormato()
     if(formato == 1)
       b = input("Insira o valor da largura em metros.");
       h = input("Insira o valor da altura em metros.");
-      momentoIneriaPolarEmZ = (b*(power(h,3)))/2;
-      momentoIneriaPolarEmY = (h*(power(b,3)))/2;
-      momentoInerciaPolar = momentoIneriaPolarEmZ + momentoIneriaPolarEmY;
+      momentoInerciaEmZ = (b*(power(h,3)))/12;
+      momentoIneriaEmY = (h*(power(b,3)))/12;
+      momentoInerciaPolar = momentoInerciaEmZ + momentoIneriaEmY;
       areaTransversal = h*b
     elseif(formato == 2)
       d = input("Insira o valor do diametro em metros.");
-      momentoInerciaPolar = (2 * (3.14 * (power(d,4))))/64;
+      momentoInerciaEmZ = (3.14 * (power(d,4)))/64;
+      momentoInerciaPolar = (2 * momentoInerciaEmZ);
       areaTransversal = 3.14*(power(d/2,2));
     else
       d_e = input("Insira o valor do diametro externo em metros.");
       d_i = input("Insira o valor do diametro interno em metros.");
-      momentoInerciaPolar = (2 * (3.14 * ((power(d_e,4))-(power(d_i,4)))))/64;
+      momentoInerciaEmZ = (3.14 * ((power(d_e,4))-(power(d_i,4))))/64;
+      momentoInerciaPolar = (2 * momentoInerciaEmZ);
       areaTransversal = 3.14*(power(d_e/2,2)) - 3.14*(power(d_i/2,2));
     endif
 
-    infoFormato = [momentoInerciaPolar,areaTransversal];
+    infoFormato = [momentoInerciaEmZ,momentoInerciaPolar,areaTransversal];
 endfunction
 
 
@@ -173,15 +175,17 @@ if tamanhoViga == 0
 endif
 %}
 
-tamanhoViga = 6;
+
+tamanhoViga = 3.75;
 momentos = zeros(0,2);
-forcas = [4.5,0,-4000;6,0,-6000]
-carregamentos = [0,3,-2000]
-torques = zeros(0,2);
+forcas = zeros(0,3);
+carregamentos = zeros(0,3);
+torques = [0.4,3000;1,-2000]
 momentos = zeros(0,2);
-infoFormato = [ 1.04*power(10,-3),0.08];
-moduloElasticidade = 12* power(10,9);
-moduloCisalhamento = 1;
+infoFormato = [ 1,6.14*power(10,-7), 1]
+moduloElasticidade = 1;
+moduloCisalhamento = 63.4* power(10,9);
+
 
 
 ###############################################
@@ -290,6 +294,7 @@ for i = 1:rows(carregamentos)
   for j = 1:columns(coefs)
     if coefs(j) != 0
       q = [q;[coefs(j),carregamentos(i,1),columns(coefs)-j]];
+      q = [q;[-1*coefs(j),carregamentos(i,2),columns(coefs)-j]];
     endif
   endfor
 endfor
@@ -316,7 +321,7 @@ t
 q
 V_x = integral_de_singularidade(q)
 M_x = integral_de_singularidade(V_x)
-Teta_x = integral_de_singularidade(M_x)
+Teta_x = integral_de_singularidade(M_x) 
 v_x = integral_de_singularidade(Teta_x)
 
 N_x = integral_de_singularidade(f_x)
@@ -325,10 +330,10 @@ L_x = integral_de_singularidade(N_x)
 T_x = integral_de_singularidade(t)
 TORCAO_x = integral_de_singularidade(T_x)
 
-constanteTETA = -(resolve_equacao(Teta_x,0-0.01))
-constanteV = -(resolve_equacao(v_x,0-0.01))
-constanteL = -(resolve_equacao(L_x,0-0.01))
-constanteTORCAO = -(resolve_equacao(TORCAO_x,0-0.01))
+constanteTETA = -(resolve_equacao(Teta_x,0+0.000000000000001))
+constantev = -(resolve_equacao(v_x,0+0.000000000000001) + constanteTETA*0.000000000000001)
+constanteL = -(resolve_equacao(L_x,0+0.000000000000001))
+constanteTORCAO = -(resolve_equacao(TORCAO_x,0+0.000000000000001))
 
 
 ####################################################################
@@ -342,45 +347,44 @@ for i = 2:rows(PontosDeInteresse)
   DadosDoDiagrama_M_x = zeros(rows(X), 1);
   DadosDoDiagrama_N_x = zeros(rows(X), 1);
   DadosDoDiagrama_T_x = zeros(rows(X), 1);
-  DadosDoDiagrama_TETA_x = zeros(rows(X), 1) + constanteTETA;
-  DadosDoDiagrama_v_x = zeros(rows(X), 1) + constanteV;
-  DadosDoDiagrama_L_x = zeros(rows(X), 1) + constanteL;
-  DadosDoDiagrama_TORCAO_x = zeros(rows(X), 1) + constanteTORCAO;
+  DadosDoDiagrama_TETA_x = zeros(rows(X), 1);
+  DadosDoDiagrama_v_x = zeros(rows(X), 1);
+  DadosDoDiagrama_L_x = zeros(rows(X), 1);
+  DadosDoDiagrama_TORCAO_x = zeros(rows(X), 1);
 
 
   for j = 1:rows(X)
     x = X(j);
     if j == 1
-      V = resolve_equacao(V_x, X(j)+0.01)
-      M = resolve_equacao(M_x, X(j)+0.01);
-      N = resolve_equacao(N_x, X(j)+0.01);
-      T = resolve_equacao(T_x, X(j)+0.01)
-      TETA = (resolve_equacao(Teta_x,X(j)+0.01)) * (1/(moduloElasticidade*infoFormato(1)));
-      v = (resolve_equacao(v_x,X(j)+0.01)) * (1/(moduloElasticidade*infoFormato(1)));
-      L = (resolve_equacao(L_x,X(j)+0.01)) * (1/(moduloElasticidade*infoFormato(2)));
-      TORCAO = (resolve_equacao(TORCAO_x,X(j)+0.01)) * (1/(moduloCisalhamento*infoFormato(1)));
+      V = resolve_equacao(V_x, X(j)+0.000000000000001)
+      M = resolve_equacao(M_x, X(j)+0.000000000000001);
+      N = resolve_equacao(N_x, X(j)+0.000000000000001);
+      T = resolve_equacao(T_x, X(j)+0.000000000000001)
+      TETA = ((resolve_equacao(Teta_x,X(j)+0.000000000000001))+constanteTETA) * (1/(moduloElasticidade*infoFormato(1)));
+      v = ((resolve_equacao(v_x,X(j)+0.000000000000001))+ constantev + constanteTETA*X(j)) * (1/(moduloElasticidade*infoFormato(1)));
+      L = ((resolve_equacao(L_x,X(j)+0.000000000000001)) + constanteL) * (1/(moduloElasticidade*infoFormato(3)));
+      TORCAO = ((resolve_equacao(TORCAO_x,X(j)+0.000000000000001)) + constanteTORCAO) * (1/(moduloCisalhamento*infoFormato(2)));
 
     elseif j == rows(X)
-      V = resolve_equacao(V_x, X(j)-0.01)
-      M = resolve_equacao(M_x, X(j)-0.01);
-      N = resolve_equacao(N_x, X(j)-0.01);
-      T = resolve_equacao(T_x, X(j)-0.01);
-      TETA = resolve_equacao(Teta_x,X(j)-0.01) * (1/(moduloElasticidade*infoFormato(1)));
-      v = resolve_equacao(v_x,X(j)-0.01) * (1/(moduloElasticidade*infoFormato(1)));
-      L = resolve_equacao(L_x,X(j)-0.01) * (1/(moduloElasticidade*infoFormato(2)));
-      TORCAO = resolve_equacao(TORCAO_x,X(j)-0.01) * (1/(moduloCisalhamento*infoFormato(1)));
-
+      V = resolve_equacao(V_x, X(j)-0.000000000000001)
+      M = resolve_equacao(M_x, X(j)-0.000000000000001);
+      N = resolve_equacao(N_x, X(j)-0.000000000000001);
+      T = resolve_equacao(T_x, X(j)-0.000000000000001);
+      TETA = (resolve_equacao(Teta_x,X(j)-0.000000000000001)+constanteTETA) * (1/(moduloElasticidade*infoFormato(1))) ; 
+      v = (resolve_equacao(v_x,X(j)-0.000000000000001)+constantev + constanteTETA*X(j)) * (1/(moduloElasticidade*infoFormato(1)));
+      L = (resolve_equacao(L_x,X(j)-0.000000000000001)+constanteL) * (1/(moduloElasticidade*infoFormato(3)));
+      TORCAO = (resolve_equacao(TORCAO_x,X(j)-0.000000000000001)+constanteTORCAO) * (1/(moduloCisalhamento*infoFormato(2)));
 
     else
       V = resolve_equacao(V_x, X(j))
       M = resolve_equacao(M_x, X(j));
       N = resolve_equacao(N_x, X(j));
       T = resolve_equacao(T_x, X(j))
-      TETA = resolve_equacao(Teta_x,X(j)) * (1/(moduloElasticidade*infoFormato(1)));
-      v = resolve_equacao(v_x,X(j)) * (1/(moduloElasticidade*infoFormato(1)));
-      L = resolve_equacao(L_x,X(j)) * (1/(moduloElasticidade*infoFormato(2)));
-      TORCAO = resolve_equacao(TORCAO_x,X(j)) * (1/(moduloCisalhamento*infoFormato(1)));
-  
+      TETA = (resolve_equacao(Teta_x,X(j))+constanteTETA) * (1/(moduloElasticidade*infoFormato(1)));
+      v = (resolve_equacao(v_x,X(j))+constantev + constanteTETA*X(j)) * (1/(moduloElasticidade*infoFormato(1)));
+      L = (resolve_equacao(L_x,X(j))+constanteL) * (1/(moduloElasticidade*infoFormato(3)));
+      TORCAO = (resolve_equacao(TORCAO_x,X(j))+constanteTORCAO) * (1/(moduloCisalhamento*infoFormato(2)));
+
     endif
 
         
