@@ -29,24 +29,25 @@ function infoFormato = getFormato()
     if(formato == 1)
       b = input("Insira o valor da largura em metros.");
       h = input("Insira o valor da altura em metros.");
-      momentoIneriaPolarEmZ = (b*(hˆ3))/2;
-      momentoIneriaPolarEmY = (h*(bˆ3))/2;
-      momentoInerciaPolar = momentoIneriaPolarEmZ + momentoIneriaPolarEmY;
+      momentoInerciaEmZ = (b*(power(h,3)))/12;
+      momentoIneriaEmY = (h*(power(b,3)))/12;
+      momentoInerciaPolar = momentoInerciaEmZ + momentoIneriaEmY;
       areaTransversal = h*b
     elseif(formato == 2)
       d = input("Insira o valor do diametro em metros.");
-      momentoInerciaPolar = (2 * (3.14 * (dˆ4)))/64;
-      areaTransversal = 3.14*((d/2)ˆ2);
+      momentoInerciaEmZ = (3.14 * (power(d,4)))/64;
+      momentoInerciaPolar = (2 * momentoInerciaEmZ);
+      areaTransversal = 3.14*(power(d/2,2));
     else
       d_e = input("Insira o valor do diametro externo em metros.");
       d_i = input("Insira o valor do diametro interno em metros.");
-      momentoInerciaPolar = (2 * (3.14 * ((d_eˆ4)-(d_iˆ4))))/64;
-      areaTransversal = 3.14*((d_e/2)ˆ2) - 3.14*((d_i/2)ˆ2);
+      momentoInerciaEmZ = (3.14 * ((power(d_e,4))-(power(d_i,4))))/64;
+      momentoInerciaPolar = (2 * momentoInerciaEmZ);
+      areaTransversal = 3.14*(power(d_e/2,2)) - 3.14*(power(d_i/2,2));
     endif
 
-    infoFormato = [momentoInerciaPolar,areaTransversal];
+    infoFormato = [momentoInerciaEmZ,momentoInerciaPolar,areaTransversal];
 endfunction
-
 
 
 function forcaCarregamento = calcForcaCarregamento(carregamento)
@@ -157,37 +158,35 @@ endfunction
 ###############################################
 ######## ENTRADAS! ###########
 ###############################################
-%{
+
 tamanhoViga = input("Digite o tamanho da viga: ");
 posicaoRolete = input("Digite o ponto aonde está o apoio do tipo rolete : ");
 posicaoPino = input("Digite o ponto aonde está o apoio do tipo pino : ");
-forcas = getForcas()
-torques = getTorques()
-momentos = getMomentos()
-carregamentos = getCarregamentos()
-moduloCisalhamento = getModuloCisalhamento()
-moduloElasticidade = getModuloElasticidade()
-infoFormato = getFormato()
+forcas = getForcas();
+torques = getTorques();
+momentos = getMomentos();
+carregamentos = getCarregamentos();
+moduloCisalhamento = getModuloCisalhamento();
+moduloElasticidade = getModuloElasticidade();
+infoFormato = getFormato();
 
-%}
-tamanhoViga = 6;
-posicaoRolete = 6;
+%{ EXEMPLOS DA AULA 4
+tamanhoViga = 9;
+posicaoRolete = 9;
 posicaoPino = 0;
 forcas = zeros(0,3); # [x, fx, fy]
-ForcasExternas = zeros(0,3);
 torques = zeros(0,2); # [x, intensidade]
-momentos = [3,15000]; # [x, intensidade
-carregamentos = [3,6,-1000,0];
-infoFormato = [];
-moduloCisalhamento = 0
-moduloElasticidade = 0
-
-%{
+momentos = zeros(0,2); # [x, intensidade
+carregamentos = [0,4.5,-1111.11111111,0;4.5,9.0,-1111.11111111,5000];
+infoFormato = [1,1,1];
+moduloCisalhamento = 1;
+moduloElasticidade = 1;
+%}
+%{ EXEMPLOS DA AULA 4
 tamanhoViga = 6;
 posicaoRolete = 6;
 posicaoPino = 0;
 forcas = [1.5,0,-10000;4.5,0,-15000]; # [x, fx, fy]
-ForcasExternas = [1.5,0,-10000;4.5,0,-15000;];
 torques = zeros(0,2); # [x, intensidade]
 momentos = zeros(0,2); # [x, intensidade
 carregamentos = zeros(0,3);
@@ -228,6 +227,8 @@ endfor
 
 momento = -momento 
 
+
+
 #4.Achando Fy do rolete e Fy do pino com a equacao de equlibrio dos momento e equilibrio das focas na vertical
 resultado_sistema= [ 1 , 1 ; -posicaoRolete , -posicaoPino] \ [fy ; momento]  ;
 
@@ -249,19 +250,20 @@ printf("------->Torque de reacao do apoio tipo pino: %.2f\n", torque);
 # Pontos de interesse
 # Sempre escolhemos o lado esquerdo da secção para encontar as forças solicitantes,
 # pois ele tem o ponto considerado o nosso referencial 0.
-if (fy_rolete)
-  forcas = [forcas;[posicaoRolete,0,fy_rolete]];
-endif
 if (fy_pino)
   forcas = [forcas;[posicaoPino,0,fy_pino]];
+endif
+if (fy_rolete)
+  forcas = [forcas;[posicaoRolete,0,fy_rolete]];
 endif
 if (fx_pino)
   forcas = [forcas;[posicaoPino,fx_pino,0]];
 endif
 if (torque)
-  torques = [torques;[posicaoPino,torque]];
+  torques = [torques;[posicaoRolete,torque]];
 endif
 
+# Forma de representar e implementar a integral de singularidade
 function f_final = integral_de_singularidade(f)
   f_final = f;
   for i = 1:rows(f)
@@ -274,6 +276,7 @@ function f_final = integral_de_singularidade(f)
   endfor
 endfunction
 
+# Dado a representaçao da função de singularidade e um ponto retorna o valor da função no ponto
 function resultado = resolve_equacao(f,x)
   resultado = 0;
   for i = 1:rows(f)
@@ -288,9 +291,10 @@ function resultado = resolve_equacao(f,x)
 endfunction
 
 
-PontosDeInteresse = [unique(vertcat(0.0,forcas(:,1),momentos(:,1),carregamentos(:,1),torques(:,1))];
+PontosDeInteresse = [unique(vertcat(0.0,forcas(:,1),momentos(:,1),carregamentos(:,1),carregamentos(:,2),torques(:,1)))]
 
 
+# representação do q
 # q(x) = [intensidade, inicio, expoente; ...]
 q = [];
 for i = 1:rows(forcas)
@@ -306,6 +310,7 @@ for i = 1:rows(carregamentos)
   for j = 1:columns(coefs)
     if coefs(j) != 0
       q = [q;[coefs(j),carregamentos(i,1),columns(coefs)-j]];
+      q = [q;[-1*coefs(j),carregamentos(i,2),columns(coefs)-j]];
     endif
   endfor
 endfor
@@ -314,36 +319,57 @@ endfor
 f_x = [];
 for i = 1:rows(forcas)
   if forcas(i,2) != 0
-    q = [q;[forcas(i,2),forcas(i,1),-1]];
+    f_x = [f_x;[forcas(i,2),forcas(i,1),-1]];
   endif
 endfor
 
 #t(x) = [intensidade, inicio, expoente; ...]
 t = [];
 for i = 1:rows(torques)
-  q = [q;[torques(i,2),torques(i,1),-1]];
+  t = [t;[torques(i,2),torques(i,1),-1]];
 endfor
 
 
 #V(x) = integral_de_singularidade(q) = [intensidade, inicio, expoente; ...]
-V_x = integral_de_singularidade(q)
-M_x = integral_de_singularidade(V_x)
-Teta_x = integral_de_singularidade(M_x)
-v_x = integral_de_singularidade(Teta_x)
+V_x = integral_de_singularidade(q);
 
-N_x = integral_de_singularidade(f_x)
-L_x = integral_de_singularidade(N_x)
+#M(x) = integral_de_singularidade(V) = [intensidade, inicio, expoente; ...]
+M_x = integral_de_singularidade(V_x);
 
-T_x = integral_de_singularidade(t)
-TORCAO_x = integral_de_singularidade(T_x)
+#Teta(x) = integral_de_singularidade(M) sem a constante = [intensidade, inicio, expoente; ...]
+Teta_x = integral_de_singularidade(M_x);
+
+#v(x) = integral_de_singularidade(Teta) sem a constante = [intensidade, inicio, expoente; ...]
+v_x = integral_de_singularidade(Teta_x);
+
+#N(x) = integral_de_singularidade(f_x) sem a constante = [intensidade, inicio, expoente; ...]
+N_x = integral_de_singularidade(f_x);
+
+#L(x) = integral_de_singularidade(N_x) sem a constante = [intensidade, inicio, expoente; ...]
+L_x = integral_de_singularidade(N_x);
+
+#T(x) = integral_de_singularidade(t) sem a constante = [intensidade, inicio, expoente; ...]
+T_x = integral_de_singularidade(t);
+
+#TORCAO(x) = integral_de_singularidade(T_x) sem a constante = [intensidade, inicio, expoente; ...]
+TORCAO_x = integral_de_singularidade(T_x);
 
 
-constanteV = -(resolve_equacao(v_x,posicaoRolete-0.01))
-constanteL = -(resolve_equacao(L_x,posicaoRolete-0.01))
-constanteTORCAO = -(resolve_equacao(TORCAO_x,posicaoRolete-0.01))
+# CALCULO DAS CONSTANTES
 
+# Assumimos a origem com Inclinação igual a 0
+constanteTETA = -(resolve_equacao(Teta_x,0+0.000000000000001));
 
+# Utilizamos a posicao do pino para determinar a condicao de contorno e obter a constante de integracao da deflexao
+constantev = -(resolve_equacao(v_x,posicaoPino+0.000000000000001) + constanteTETA*posicaoPino);
 
+# Utilizamos a posicao do pino para determinar a condicao de contorno e obter a constante do alongamento
+constanteL = -(resolve_equacao(L_x,posicaoPino+0.000000000000001));
+
+# Utilizamos a posicao do pino para determinar a condicao de contorno e obter a constante do angulo de torcao
+constanteTORCAO = -(resolve_equacao(TORCAO_x,posicaoPino+0.000000000000001));
+
+# As constantes são utilizadas para o cálculo de cada ponto no gráfico.
 
 
 ####################################################################
@@ -351,7 +377,7 @@ constanteTORCAO = -(resolve_equacao(TORCAO_x,posicaoRolete-0.01))
 ####################################################################
 for i = 2:rows(PontosDeInteresse)  
   # Criando valores de x no intervalo de dois pontos de interesse
-  X = transpose(linspace(PontosDeInteresse(i-1),PontosDeInteresse(i),(PontosDeInteresse(i)-PontosDeInteresse(i-1))*4));  
+  X = transpose(linspace(PontosDeInteresse(i-1),PontosDeInteresse(i),max((PontosDeInteresse(i)-PontosDeInteresse(i-1))*4,2)));
   DadosDoDiagrama_V_x = zeros(rows(X), 1);
   DadosDoDiagrama_M_x = zeros(rows(X), 1);
   DadosDoDiagrama_N_x = zeros(rows(X), 1);
@@ -361,39 +387,39 @@ for i = 2:rows(PontosDeInteresse)
   DadosDoDiagrama_L_x = zeros(rows(X), 1);
   DadosDoDiagrama_TORCAO_x = zeros(rows(X), 1);
 
+
   for j = 1:rows(X)
-    X(j)
+    x = X(j);
     if j == 1
-      V = resolve_equacao(V_x, X(j)+0.01);
-      M = resolve_equacao(M_x, X(j)+0.01);
-      N = resolve_equacao(N_x, X(j)+0.01);
-      T = resolve_equacao(T_x, X(j)+0.01);
-      TETA = resolve_equacao(Teta_x,X(j)+0.01) * (1/(moduloElasticidade*infoFormato(0)));
-      v = resolve_equacao(v_x,X(j)+0.01) * (1/(moduloElasticidade*infoFormato(0))) + constanteV;
-      L = resolve_equacao(L_x,X(j)+0.01) * (1/(moduloElasticidade*infoFormato(1))) +  constanteL;
-      TORCAO = resolve_equacao(TORCAO_x,X(j)+0.01) * (1/(moduloCisalhamento*infoFormato(1))) + constanteTORCAO;
+      V = resolve_equacao(V_x, X(j)+0.000000000000001);
+      M = resolve_equacao(M_x, X(j)+0.000000000000001);
+      N = resolve_equacao(N_x, X(j)+0.000000000000001);
+      T = resolve_equacao(T_x, X(j)+0.000000000000001);
+      TETA = ((resolve_equacao(Teta_x,X(j)+0.000000000000001))+constanteTETA) * (1/(moduloElasticidade*infoFormato(1)));
+      v = ((resolve_equacao(v_x,X(j)+0.000000000000001))+ constantev + constanteTETA*X(j)) * (1/(moduloElasticidade*infoFormato(1)));
+      L = ((resolve_equacao(L_x,X(j)+0.000000000000001)) + constanteL) * (1/(moduloElasticidade*infoFormato(3)));
+      TORCAO = ((resolve_equacao(TORCAO_x,X(j)+0.000000000000001)) + constanteTORCAO) * (1/(moduloCisalhamento*infoFormato(2)));
 
     elseif j == rows(X)
-      V = resolve_equacao(V_x, X(j)-0.01);
-      M = resolve_equacao(M_x, X(j)-0.01);
-      N = resolve_equacao(N_x, X(j)-0.01);
-      T = resolve_equacao(T_x, X(j)-0.01);
-      TETA = resolve_equacao(Teta_x,X(j)-0.01) * (1/(moduloElasticidade*infoFormato(0)));
-      v = resolve_equacao(v_x,X(j)-0.01) * (1/(moduloElasticidade*infoFormato(0))) + constanteV;
-      L = resolve_equacao(L_x,X(j)-0.01) * (1/(moduloElasticidade*infoFormato(1))) + constanteL;
-      TORCAO = resolve_equacao(TORCAO_x,X(j)-0.01) * (1/(moduloCisalhamento*infoFormato(1))) + constanteTORCAO;
-
+      V = resolve_equacao(V_x, X(j)-0.000000000000001);
+      M = resolve_equacao(M_x, X(j)-0.000000000000001);
+      N = resolve_equacao(N_x, X(j)-0.000000000000001);
+      T = resolve_equacao(T_x, X(j)-0.000000000000001);
+      TETA = (resolve_equacao(Teta_x,X(j)-0.000000000000001)+constanteTETA) * (1/(moduloElasticidade*infoFormato(1))) ; 
+      v = (resolve_equacao(v_x,X(j)-0.000000000000001)+constantev + constanteTETA*X(j)) * (1/(moduloElasticidade*infoFormato(1)));
+      L = (resolve_equacao(L_x,X(j)-0.000000000000001)+constanteL) * (1/(moduloElasticidade*infoFormato(3)));
+      TORCAO = (resolve_equacao(TORCAO_x,X(j)-0.000000000000001)+constanteTORCAO) * (1/(moduloCisalhamento*infoFormato(2)));
 
     else
       V = resolve_equacao(V_x, X(j));
       M = resolve_equacao(M_x, X(j));
       N = resolve_equacao(N_x, X(j));
       T = resolve_equacao(T_x, X(j));
-      TETA = resolve_equacao(Teta_x,X(j)) * (1/(moduloElasticidade*infoFormato(0)));
-      v = resolve_equacao(v_x,X(j)) * (1/(moduloElasticidade*infoFormato(0))) + constanteV;
-      L = resolve_equacao(L_x,X(j)) * (1/(moduloElasticidade*infoFormato(1))) + constanteL;
-      TORCAO = resolve_equacao(TORCAO_x,X(j)) * (1/(moduloCisalhamento*infoFormato(1))) + constanteTORCAO;
-  
+      TETA = (resolve_equacao(Teta_x,X(j))+constanteTETA) * (1/(moduloElasticidade*infoFormato(1)));
+      v = (resolve_equacao(v_x,X(j))+constantev + constanteTETA*X(j)) * (1/(moduloElasticidade*infoFormato(1)));
+      L = (resolve_equacao(L_x,X(j))+constanteL) * (1/(moduloElasticidade*infoFormato(3)));
+      TORCAO = (resolve_equacao(TORCAO_x,X(j))+constanteTORCAO) * (1/(moduloCisalhamento*infoFormato(2)));
+
     endif
 
         
@@ -409,11 +435,10 @@ for i = 2:rows(PontosDeInteresse)
 
 
   endfor 
-  printf("aaaaaaaaaaaaaaaaaaaaaaaaaaa")
   # plot da função para cada intervalo dos pontos de interesse
   
 
-  subplot(8,1,1);
+  subplot(4,2,1);
   hold on;
   xlabel ("x");
   ylabel ("V(x)");
@@ -421,7 +446,7 @@ for i = 2:rows(PontosDeInteresse)
   plot(X,DadosDoDiagrama_V_x);
   hold off;     
   
-  subplot(8,1,2);
+  subplot(4,2,2);
   hold on;
   xlabel ("x");
   ylabel ("M(x)");
@@ -429,7 +454,7 @@ for i = 2:rows(PontosDeInteresse)
   plot(X,DadosDoDiagrama_M_x);
   hold off;
 
-  subplot(8,1,3);
+  subplot(4,2,3);
   hold on;
   xlabel ("x");
   ylabel ("N(x)");
@@ -437,7 +462,7 @@ for i = 2:rows(PontosDeInteresse)
   plot(X,DadosDoDiagrama_N_x);
   hold off;
 
-  subplot(8,1,4);
+  subplot(4,2,4);
   hold on;
   xlabel ("x");
   ylabel ("T(x)");
@@ -445,7 +470,7 @@ for i = 2:rows(PontosDeInteresse)
   plot(X,DadosDoDiagrama_T_x);
   hold off;
 
-  subplot(8,1,5);
+  subplot(4,2,5);
   hold on;
   xlabel ("x");
   ylabel ("0(x)");
@@ -453,7 +478,7 @@ for i = 2:rows(PontosDeInteresse)
   plot(X,DadosDoDiagrama_TETA_x);
   hold off;
 
-  subplot(8,1,6);
+  subplot(4,2,6);
   hold on;
   xlabel ("x");
   ylabel ("v(x)");
@@ -461,7 +486,7 @@ for i = 2:rows(PontosDeInteresse)
   plot(X,DadosDoDiagrama_v_x);
   hold off;
 
-  subplot(8,1,7);
+  subplot(4,2,7);
   hold on;
   xlabel ("x");
   ylabel ("L(x)");
@@ -469,7 +494,7 @@ for i = 2:rows(PontosDeInteresse)
   plot(X,DadosDoDiagrama_L_x);
   hold off;
 
-  subplot(8,1,8);
+  subplot(4,2,8);
   hold on;
   xlabel ("x");
   ylabel ("Torcao(x)");
@@ -479,6 +504,3 @@ for i = 2:rows(PontosDeInteresse)
 endfor
 print diagramaForcasSolicitantes.pdf;
 open diagramaForcasSolicitantes.pdf
-
-
-
