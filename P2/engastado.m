@@ -175,7 +175,8 @@ if tamanhoViga == 0
   error("Viga inexistente")
 endif
 
-%{ EXEMPLOS AULA 5/7
+%{
+EXEMPLOS AULA 5/7
 tamanhoViga = 3.75;
 momentos = zeros(0,2);
 forcas = zeros(0,3);
@@ -278,7 +279,7 @@ function resultado = resolve_equacao(f,x)
 endfunction
 
 
-PontosDeInteresse = [unique(vertcat(0.0,forcas(:,1),momentos(:,1),carregamentos(:,1),carregamentos(:,2),torques(:,1)))]
+PontosDeInteresse = [unique(vertcat(0.0,forcas(:,1),momentos(:,1),carregamentos(:,1),carregamentos(:,2),torques(:,1),tamanhoViga))]
 
 
 # representação do q
@@ -463,7 +464,7 @@ for i = 2:rows(PontosDeInteresse)
   hold on;
   xlabel ("x");
   ylabel ("0(x)");
-  title ("Inclinação");
+  title ("Inclinacao");
   plot(X,DadosDoDiagrama_TETA_x);
   hold off;
 

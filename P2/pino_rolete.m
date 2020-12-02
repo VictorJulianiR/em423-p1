@@ -170,7 +170,8 @@ moduloCisalhamento = getModuloCisalhamento();
 moduloElasticidade = getModuloElasticidade();
 infoFormato = getFormato();
 
-%{ EXEMPLOS DA AULA 4
+%{ 
+EXEMPLOS DA AULA 4
 tamanhoViga = 9;
 posicaoRolete = 9;
 posicaoPino = 0;
@@ -182,7 +183,8 @@ infoFormato = [1,1,1];
 moduloCisalhamento = 1;
 moduloElasticidade = 1;
 %}
-%{ EXEMPLOS DA AULA 4
+%{
+EXEMPLOS DA AULA 4
 tamanhoViga = 6;
 posicaoRolete = 6;
 posicaoPino = 0;
@@ -291,7 +293,7 @@ function resultado = resolve_equacao(f,x)
 endfunction
 
 
-PontosDeInteresse = [unique(vertcat(0.0,forcas(:,1),momentos(:,1),carregamentos(:,1),carregamentos(:,2),torques(:,1)))]
+PontosDeInteresse = [unique(vertcat(0.0,forcas(:,1),momentos(:,1),carregamentos(:,1),carregamentos(:,2),torques(:,1),tamanhoViga))]
 
 
 # representação do q
@@ -474,7 +476,7 @@ for i = 2:rows(PontosDeInteresse)
   hold on;
   xlabel ("x");
   ylabel ("0(x)");
-  title ("Inclinação");
+  title ("Inclinacao");
   plot(X,DadosDoDiagrama_TETA_x);
   hold off;
 
