@@ -17,30 +17,30 @@ disp("#####################################################################\n");
 
 
 function moduloElasticidade = getModuloElasticidade()
-    moduloElasticidade = input("Insira o modulo de elasticidade");
+    moduloElasticidade = input("Insira o modulo de elasticidade: ");
 endfunction
 
 function moduloCisalhamento = getModuloCisalhamento()
-    moduloCisalhamento = input("Insira o modulo de cisalhamento");
+    moduloCisalhamento = input("Insira o modulo de cisalhamento: ");
 endfunction
 
 function infoFormato = getFormato()
-    formato = input("Insira o numero correspondente ao formato da barra. 1 - Retangular. 2 - Circulo. 3 - Coroa circular.");
+    formato = input("Insira o numero correspondente ao formato da barra. 1 - Retangular. 2 - Circulo. 3 - Coroa circular: ");
     if(formato == 1)
-      b = input("Insira o valor da largura em metros.");
-      h = input("Insira o valor da altura em metros.");
+      b = input("Insira o valor da largura em metros: ");
+      h = input("Insira o valor da altura em metros: ");
       momentoInerciaEmZ = (b*(power(h,3)))/12;
       momentoIneriaEmY = (h*(power(b,3)))/12;
       momentoInerciaPolar = momentoInerciaEmZ + momentoIneriaEmY;
       areaTransversal = h*b
     elseif(formato == 2)
-      d = input("Insira o valor do diametro em metros.");
+      d = input("Insira o valor do diametro em metros: ");
       momentoInerciaEmZ = (3.14 * (power(d,4)))/64;
       momentoInerciaPolar = (2 * momentoInerciaEmZ);
       areaTransversal = 3.14*(power(d/2,2));
     else
-      d_e = input("Insira o valor do diametro externo em metros.");
-      d_i = input("Insira o valor do diametro interno em metros.");
+      d_e = input("Insira o valor do diametro externo em metros: ");
+      d_i = input("Insira o valor do diametro interno em metros: ");
       momentoInerciaEmZ = (3.14 * ((power(d_e,4))-(power(d_i,4))))/64;
       momentoInerciaPolar = (2 * momentoInerciaEmZ);
       areaTransversal = 3.14*(power(d_e/2,2)) - 3.14*(power(d_i/2,2));
@@ -135,23 +135,25 @@ endfunction
 
 function carregamentos = getCarregamentos()
   numCarregamentos = input("Quantos carregamentos distribuídos estão sendo aplicados na viga: ");
-  n = input("Digite o grau máximo 'n' da função de carregamento: ")
   
-  carregamentos = zeros(numCarregamentos, n+3); # [posIni, posFim, coefs]
-
   if (numCarregamentos > 0)
+    n = input("Digite o grau máximo 'n' da função de carregamento: ")
+    carregamentos = zeros(numCarregamentos, n+3); # [posIni, posFim, coefs]
+
     disp("");
     disp("Para cada carregamento, digite as suas posições inicial e final e sua função polinomial (em N/m)");
     for i = 1:numCarregamentos
       disp(sprintf("Carregamento %d\n", i));
       posIni = input("Posição inicial: ");
       posFim = input("Posição final: ");
-      coefs = input("Coeficientes (seguindo o padrão) [an;an-1;...;a1;a0]:")
+      coefs = input("Coeficientes (seguindo o padrão) [an;an-1;...;a1;a0], lembrando que deve-se preencher completamente mesmo quando o coeficiente for 0:");
       
-      carregamentos(i, :) = [posIni;posFim;coefs]
+      carregamentos(i, :) = [posIni;posFim;coefs];
       
       disp("Carregamento computado com sucesso.");
     endfor
+  else
+    carregamentos = zeros(0, 3); # [posIni, posFim, coefs]
   endif
 endfunction
 
@@ -444,7 +446,7 @@ for i = 2:rows(PontosDeInteresse)
   hold on;
   xlabel ("x");
   ylabel ("V(x)");
-  title ("Esforço cortante");
+  title ("Esforco cortante");
   plot(X,DadosDoDiagrama_V_x);
   hold off;     
   
@@ -460,7 +462,7 @@ for i = 2:rows(PontosDeInteresse)
   hold on;
   xlabel ("x");
   ylabel ("N(x)");
-  title ("Forças normais");
+  title ("Forcas normais");
   plot(X,DadosDoDiagrama_N_x);
   hold off;
 

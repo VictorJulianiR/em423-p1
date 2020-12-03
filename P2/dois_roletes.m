@@ -17,30 +17,30 @@ disp("#####################################################################\n");
 
 
 function moduloElasticidade = getModuloElasticidade()
-    moduloElasticidade = input("Insira o modulo de elasticidade");
+    moduloElasticidade = input("Insira o modulo de elasticidade em Pa: ");
 endfunction
 
 function moduloCisalhamento = getModuloCisalhamento()
-    moduloCisalhamento = input("Insira o modulo de cisalhamento");
+    moduloCisalhamento = input("Insira o modulo de cisalhamento em Pa: ");
 endfunction
 
 function infoFormato = getFormato()
-    formato = input("Insira o numero correspondente ao formato da barra. 1 - Retangular. 2 - Circulo. 3 - Coroa circular.");
+    formato = input("Insira o numero correspondente ao formato da barra. 1 - Retangular. 2 - Circulo. 3 - Coroa circular: ");
     if(formato == 1)
-      b = input("Insira o valor da largura em metros.");
-      h = input("Insira o valor da altura em metros.");
+      b = input("Insira o valor da largura em metros: ");
+      h = input("Insira o valor da altura em metros: ");
       momentoInerciaEmZ = (b*(power(h,3)))/12;
       momentoIneriaEmY = (h*(power(b,3)))/12;
       momentoInerciaPolar = momentoInerciaEmZ + momentoIneriaEmY;
       areaTransversal = h*b
     elseif(formato == 2)
-      d = input("Insira o valor do diametro em metros.");
+      d = input("Insira o valor do diametro em metros: ");
       momentoInerciaEmZ = (3.14 * (power(d,4)))/64;
       momentoInerciaPolar = (2 * momentoInerciaEmZ);
       areaTransversal = 3.14*(power(d/2,2));
     else
-      d_e = input("Insira o valor do diametro externo em metros.");
-      d_i = input("Insira o valor do diametro interno em metros.");
+      d_e = input("Insira o valor do diametro externo em metros: ");
+      d_i = input("Insira o valor do diametro interno em metros: ");
       momentoInerciaEmZ = (3.14 * ((power(d_e,4))-(power(d_i,4))))/64;
       momentoInerciaPolar = (2 * momentoInerciaEmZ);
       areaTransversal = 3.14*(power(d_e/2,2)) - 3.14*(power(d_i/2,2));
@@ -115,23 +115,25 @@ endfunction
 
 function carregamentos = getCarregamentos()
   numCarregamentos = input("Quantos carregamentos distribuídos estão sendo aplicados na viga: ");
-  n = input("Digite o grau máximo 'n' da função de carregamento: ")
   
-  carregamentos = zeros(numCarregamentos, n+3); # [posIni, posFim, coefs]
-
   if (numCarregamentos > 0)
+    n = input("Digite o grau máximo 'n' da função de carregamento: ")
+    carregamentos = zeros(numCarregamentos, n+3); # [posIni, posFim, coefs]
+
     disp("");
     disp("Para cada carregamento, digite as suas posições inicial e final e sua função polinomial (em N/m)");
     for i = 1:numCarregamentos
       disp(sprintf("Carregamento %d\n", i));
       posIni = input("Posição inicial: ");
       posFim = input("Posição final: ");
-      coefs = input("Coeficientes (seguindo o padrão) [an;an-1;...;a1;a0]:");
+      coefs = input("Coeficientes (seguindo o padrão) [an;an-1;...;a1;a0], lembrando que deve-se preencher completamente mesmo quando o coeficiente for 0:");
       
       carregamentos(i, :) = [posIni;posFim;coefs];
       
       disp("Carregamento computado com sucesso.");
     endfor
+  else
+    carregamentos = zeros(0, 3); # [posIni, posFim, coefs]
   endif
 endfunction
 
@@ -164,13 +166,14 @@ endfunction
 tamanhoViga = input("Digite o tamanho da viga: ");
 pos_rolete_A = input ("Digite a posição do rolete 1: ");
 pos_rolete_B = input ("Digite a posição do rolete 2: ");
-forcas = getForcas()
-torques = getTorques()
-infoFormato = getFormato()
-moduloCisalhamento = getModuloCisalhamento()
-moduloElasticidade = getModuloElasticidade()
-momentos = getMomentos()
-carregamentos = getCarregamentos()
+forcas = getForcas();
+torques = getTorques();
+momentos = getMomentos();
+carregamentos = getCarregamentos();
+infoFormato = getFormato();
+moduloCisalhamento = getModuloCisalhamento();
+moduloElasticidade = getModuloElasticidade();
+
 
 %{
 EXEMPLOS AULA 5/7
@@ -215,7 +218,6 @@ if(torque != 0)
   printf("NÃO EXISTE EQUILIBRIO DE TORQUE!");
   quit()
 endif
-printf("Torque: %f\n", torque);
 
 # 4. Equilibrio de momentos:
 #Será escolhido o ponto de referencia sempre o rolete mais a esquerda.
@@ -310,7 +312,7 @@ function resultado = resolve_equacao(f,x)
 endfunction
 
 
-PontosDeInteresse = [unique(vertcat(0.0,forcas(:,1),momentos(:,1),carregamentos(:,1),carregamentos(:,2),torques(:,1),tamanhoViga))]
+PontosDeInteresse = [unique(vertcat(0.0,forcas(:,1),momentos(:,1),carregamentos(:,1),carregamentos(:,2),torques(:,1),tamanhoViga))];
 
 
 # representação do q
@@ -378,16 +380,16 @@ TORCAO_x = integral_de_singularidade(T_x);
 # CALCULO DAS CONSTANTES
 
 # Assumimos a origem com Inclinação igual a 0
-constanteTETA = -(resolve_equacao(Teta_x,0+0.000000000000001))
+constanteTETA = -(resolve_equacao(Teta_x,0+0.000000000000001));
 
 # Utilizamos a posicao do rolete A para determinar a condicao de contorno e obter a constante de integracao da deflexao
-constantev = -(resolve_equacao(v_x,pos_rolete_A+0.000000000000001) + constanteTETA*pos_rolete_A)
+constantev = -(resolve_equacao(v_x,pos_rolete_A+0.000000000000001) + constanteTETA*pos_rolete_A);
 
 # Assumimos a origem com Alongamento igual a 0
-constanteL = -(resolve_equacao(L_x,0+0.000000000000001))
+constanteL = -(resolve_equacao(L_x,0+0.000000000000001));
 
 # Assumimos a origem com Angulo de torcao igual a 0
-constanteTORCAO = -(resolve_equacao(TORCAO_x,0+0.000000000000001))
+constanteTORCAO = -(resolve_equacao(TORCAO_x,0+0.000000000000001));
 
 # As constantes são utilizadas para o cálculo de cada ponto no gráfico.
 
@@ -462,7 +464,7 @@ for i = 2:rows(PontosDeInteresse)
   hold on;
   xlabel ("x");
   ylabel ("V(x)");
-  title ("Esforço cortante");
+  title ("Esforco cortante");
   plot(X,DadosDoDiagrama_V_x);
   hold off;     
   
@@ -478,7 +480,7 @@ for i = 2:rows(PontosDeInteresse)
   hold on;
   xlabel ("x");
   ylabel ("N(x)");
-  title ("Forças normais");
+  title ("Forcas normais");
   plot(X,DadosDoDiagrama_N_x);
   hold off;
 
