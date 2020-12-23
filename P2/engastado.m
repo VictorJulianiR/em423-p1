@@ -26,16 +26,10 @@ function moduloCisalhamento = getModuloCisalhamento()
 endfunction
 
 function infoFormato = getFormato()
-    formato = input("Insira o numero correspondente ao formato da barra. 1 - Retangular. 2 - Circulo. 3 - Coroa circular: ");
+    formato = input("Insira o numero correspondente ao formato da barra. 1 - Circulo. 2 - Coroa circular: ");
     if(formato == 1)
-      b = input("Insira o valor da largura em metros: ");
-      h = input("Insira o valor da altura em metros: ");
-      momentoInerciaEmZ = (b*(power(h,3)))/12;
-      momentoIneriaEmY = (h*(power(b,3)))/12;
-      momentoInerciaPolar = momentoInerciaEmZ + momentoIneriaEmY;
-      areaTransversal = h*b
-    elseif(formato == 2)
-      d = input("Insira o valor do diametro em metros: ");
+      d_e = input("Insira o valor do diametro em metros: ");
+      d_i = 0
       momentoInerciaEmZ = (3.14 * (power(d,4)))/64;
       momentoInerciaPolar = (2 * momentoInerciaEmZ);
       areaTransversal = 3.14*(power(d/2,2));
@@ -47,7 +41,7 @@ function infoFormato = getFormato()
       areaTransversal = 3.14*(power(d_e/2,2)) - 3.14*(power(d_i/2,2));
     endif
 
-    infoFormato = [momentoInerciaEmZ,momentoInerciaPolar,areaTransversal];
+    infoFormato = [momentoInerciaEmZ,momentoInerciaPolar,areaTransversal, d_e, d_i, formato];
 endfunction
 
 
@@ -376,7 +370,17 @@ for i = 2:rows(PontosDeInteresse)
   DadosDoDiagrama_v_x = zeros(rows(X), 1);
   DadosDoDiagrama_L_x = zeros(rows(X), 1);
   DadosDoDiagrama_TORCAO_x = zeros(rows(X), 1);
+  DadosDoDiagrama_TENSAO_NORMAL_A_x = zeros(rows(X), 1);
+  DadosDoDiagrama_TENSAO_NORMAL_B_x = zeros(rows(X), 1);
+  DadosDoDiagrama_TENSAO_NORMAL_C_x = zeros(rows(X), 1);
+  DadosDoDiagrama_TENSAO_NORMAL_D_x = zeros(rows(X), 1);
+  DadosDoDiagrama_TENSAO_CISALHAMENTO_A_x = zeros(rows(X), 1);
+  DadosDoDiagrama_TENSAO_CISALHAMENTO_B_x = zeros(rows(X), 1);
+  DadosDoDiagrama_TENSAO_CISALHAMENTO_C_x = zeros(rows(X), 1);
+  DadosDoDiagrama_TENSAO_CISALHAMENTO_D_x = zeros(rows(X), 1);
 
+
+ # infoFormato = [momentoInerciaEmZ,momentoInerciaPolar,areaTransversal, d_e, d_i, formato]
 
   for j = 1:rows(X)
     x = X(j);
@@ -389,6 +393,32 @@ for i = 2:rows(PontosDeInteresse)
       v = ((resolve_equacao(v_x,X(j)+0.000000000000001))+ constantev + constanteTETA*X(j)) * (1/(moduloElasticidade*infoFormato(1)));
       L = ((resolve_equacao(L_x,X(j)+0.000000000000001)) + constanteL) * (1/(moduloElasticidade*infoFormato(3)));
       TORCAO = ((resolve_equacao(TORCAO_x,X(j)+0.000000000000001)) + constanteTORCAO) * (1/(moduloCisalhamento*infoFormato(2)));
+      if (infoFormato(6) == 1)
+        TENSAO_NORMAL_A = N/infoFormato(3) + 0;
+        TENSAO_NORMAL_B = N/infoFormato(3) + (M * infoFormato(4)/2)/infoFormato(1);
+        TENSAO_NORMAL_C = N/infoFormato(3) + 0;
+        TENSAO_NORMAL_D = N/infoFormato(3) + (-1*(M  *infoFormato(4)/2)/infoFormato(1));
+        TENSAO_CISALHAMENTO_A = (-1 * ((V*4)/(infoFormato(3)*3))) + T*infoFormato(4)/infoFormato(2) 
+        TENSAO_CISALHAMENTO_B = 0 + T*infoFormato(4)/infoFormato(2) 
+        TENSAO_CISALHAMENTO_C = (-1 * ((V*4)/(infoFormato(3)*3))) + T*infoFormato(4)/infoFormato(2) 
+        TENSAO_CISALHAMENTO_D = 0 + T*infoFormato(4)/infoFormato(2) 
+      else
+        TENSAO_NORMAL_A = N/infoFormato(3) + 0;
+        TENSAO_NORMAL_B = N/infoFormato(3) + (M * infoFormato(4)/2)/infoFormato(1);
+        TENSAO_NORMAL_C = N/infoFormato(3) + 0;
+        TENSAO_NORMAL_D = N/infoFormato(3) + (-1*(M  *infoFormato(4)/2)/infoFormato(1));
+
+        multCisalhamento = (power(infoFormato(4),2) + infoFormato(4)*infoFormato(5) * power(infoFormato(5),2))/(power(infoFormato(4),2) + power(infoFormato(5),2))
+
+        TENSAO_CISALHAMENTO_A = (-1 * ((V*4)/(infoFormato(3)*3))*multCisalhamento) + T*infoFormato(4)/infoFormato(2) 
+        TENSAO_CISALHAMENTO_B = 0 + T*infoFormato(4)/infoFormato(2) 
+        TENSAO_CISALHAMENTO_C = (-1 * ((V*4)/(infoFormato(3)*3))*multCisalhamento) + T*infoFormato(4)/infoFormato(2) 
+        TENSAO_CISALHAMENTO_D = 0 + T*infoFormato(4)/infoFormato(2) 
+
+      endif
+
+      
+      
 
     elseif j == rows(X)
       V = resolve_equacao(V_x, X(j)-0.000000000000001);
@@ -399,6 +429,30 @@ for i = 2:rows(PontosDeInteresse)
       v = (resolve_equacao(v_x,X(j)-0.000000000000001)+constantev + constanteTETA*X(j)) * (1/(moduloElasticidade*infoFormato(1)));
       L = (resolve_equacao(L_x,X(j)-0.000000000000001)+constanteL) * (1/(moduloElasticidade*infoFormato(3)));
       TORCAO = (resolve_equacao(TORCAO_x,X(j)-0.000000000000001)+constanteTORCAO) * (1/(moduloCisalhamento*infoFormato(2)));
+      if (infoFormato(6) == 1)
+        TENSAO_NORMAL_A = N/infoFormato(3) + 0;
+        TENSAO_NORMAL_B = N/infoFormato(3) + (M * infoFormato(4)/2)/infoFormato(1);
+        TENSAO_NORMAL_C = N/infoFormato(3) + 0;
+        TENSAO_NORMAL_D = N/infoFormato(3) + (-1*(M  *infoFormato(4)/2)/infoFormato(1));
+        TENSAO_CISALHAMENTO_A = (-1 * ((V*4)/(infoFormato(3)*3))) + T*infoFormato(4)/infoFormato(2) 
+        TENSAO_CISALHAMENTO_B = 0 + T*infoFormato(4)/infoFormato(2) 
+        TENSAO_CISALHAMENTO_C = (-1 * ((V*4)/(infoFormato(3)*3))) + T*infoFormato(4)/infoFormato(2) 
+        TENSAO_CISALHAMENTO_D = 0 + T*infoFormato(4)/infoFormato(2) 
+      else
+        TENSAO_NORMAL_A = N/infoFormato(3) + 0;
+        TENSAO_NORMAL_B = N/infoFormato(3) + (M * infoFormato(4)/2)/infoFormato(1);
+        TENSAO_NORMAL_C = N/infoFormato(3) + 0;
+        TENSAO_NORMAL_D = N/infoFormato(3) + (-1*(M  *infoFormato(4)/2)/infoFormato(1));
+
+        multCisalhamento = (power(infoFormato(4),2) + infoFormato(4)*infoFormato(5) * power(infoFormato(5),2))/(power(infoFormato(4),2) + power(infoFormato(5),2))
+
+        TENSAO_CISALHAMENTO_A = (-1 * ((V*4)/(infoFormato(3)*3))*multCisalhamento) + T*infoFormato(4)/infoFormato(2) 
+        TENSAO_CISALHAMENTO_B = 0 + T*infoFormato(4)/infoFormato(2) 
+        TENSAO_CISALHAMENTO_C = (-1 * ((V*4)/(infoFormato(3)*3))*multCisalhamento) + T*infoFormato(4)/infoFormato(2) 
+        TENSAO_CISALHAMENTO_D = 0 + T*infoFormato(4)/infoFormato(2) 
+
+
+      endif
 
     else
       V = resolve_equacao(V_x, X(j));
@@ -409,7 +463,28 @@ for i = 2:rows(PontosDeInteresse)
       v = (resolve_equacao(v_x,X(j))+constantev + constanteTETA*X(j)) * (1/(moduloElasticidade*infoFormato(1)));
       L = (resolve_equacao(L_x,X(j))+constanteL) * (1/(moduloElasticidade*infoFormato(3)));
       TORCAO = (resolve_equacao(TORCAO_x,X(j))+constanteTORCAO) * (1/(moduloCisalhamento*infoFormato(2)));
+      if (infoFormato(6) == 1)
+        TENSAO_NORMAL_A = N/infoFormato(3) + 0;
+        TENSAO_NORMAL_B = N/infoFormato(3) + (M * infoFormato(4)/2)/infoFormato(1);
+        TENSAO_NORMAL_C = N/infoFormato(3) + 0;
+        TENSAO_NORMAL_D = N/infoFormato(3) + (-1*(M  *infoFormato(4)/2)/infoFormato(1));
+        TENSAO_CISALHAMENTO_A = (-1 * ((V*4)/(infoFormato(3)*3))) + T*infoFormato(4)/infoFormato(2) 
+        TENSAO_CISALHAMENTO_B = 0 + T*infoFormato(4)/infoFormato(2) 
+        TENSAO_CISALHAMENTO_C = (-1 * ((V*4)/(infoFormato(3)*3))) + T*infoFormato(4)/infoFormato(2) 
+        TENSAO_CISALHAMENTO_D = 0 + T*infoFormato(4)/infoFormato(2) 
+      else
+        TENSAO_NORMAL_A = N/infoFormato(3) + 0;
+        TENSAO_NORMAL_B = N/infoFormato(3) + (M * infoFormato(4)/2)/infoFormato(1);
+        TENSAO_NORMAL_C = N/infoFormato(3) + 0;
+        TENSAO_NORMAL_D = N/infoFormato(3) + (-1*(M  *infoFormato(4)/2)/infoFormato(1));
 
+        multCisalhamento = (power(infoFormato(4),2) + infoFormato(4)*infoFormato(5) * power(infoFormato(5),2))/(power(infoFormato(4),2) + power(infoFormato(5),2))
+        TENSAO_CISALHAMENTO_A = (-1 * ((V*4)/(infoFormato(3)*3))*multCisalhamento) + T*infoFormato(4)/infoFormato(2) 
+        TENSAO_CISALHAMENTO_B = 0 + T*infoFormato(4)/infoFormato(2) 
+        TENSAO_CISALHAMENTO_C = (-1 * ((V*4)/(infoFormato(3)*3))*multCisalhamento) + T*infoFormato(4)/infoFormato(2) 
+        TENSAO_CISALHAMENTO_D = 0 + T*infoFormato(4)/infoFormato(2) 
+
+      endif
     endif
 
         
@@ -422,6 +497,16 @@ for i = 2:rows(PontosDeInteresse)
     DadosDoDiagrama_v_x(j) = [v];
     DadosDoDiagrama_L_x(j) = [L];
     DadosDoDiagrama_TORCAO_x(j) = [TORCAO];
+    DadosDoDiagrama_TENSAO_NORMAL_A_x(j) = [TENSAO_NORMAL_A];
+    DadosDoDiagrama_TENSAO_NORMAL_B_x(j) = [TENSAO_NORMAL_B];
+    DadosDoDiagrama_TENSAO_NORMAL_C_x(j) = [TENSAO_NORMAL_C];
+    DadosDoDiagrama_TENSAO_NORMAL_D_x(j) = [TENSAO_NORMAL_D];
+    DadosDoDiagrama_TENSAO_CISALHAMENTO_A_x(j) = [TENSAO_CISALHAMENTO_A];
+    DadosDoDiagrama_TENSAO_CISALHAMENTO_B_x(j) = [TENSAO_CISALHAMENTO_B];
+    DadosDoDiagrama_TENSAO_CISALHAMENTO_C_x(j) = [TENSAO_CISALHAMENTO_C];
+    DadosDoDiagrama_TENSAO_CISALHAMENTO_D_x(j) = [TENSAO_CISALHAMENTO_D];
+
+
 
 
   endfor 
