@@ -287,7 +287,10 @@ function resultado_tensao_p = tensao_principal(sigma_1,sigma_2, teta, sinal)
     if teta == 0
       resultado_tensao_p = 0
     else
-      resultado_tensao_p = sqrt(teta)
+      if sinal == 0
+        resultado_tensao_p = teta
+      else
+        resultado_tensao_p = -1 * teta
     endif
   elseif sinal == 0
     resultado_tensao_p = ((sigma_1 + sigma_2)/2) + sqrt(power((sigma_1 + sigma_2)/2,2) + power(teta,2))
@@ -758,3 +761,5 @@ for i = 2:rows(PontosDeInteresse)
 endfor
 print diagramaForcasSolicitantes.pdf;
 open diagramaForcasSolicitantes.pdf
+
+
