@@ -164,33 +164,36 @@ endfunction
 ###############################################
 ######## ENTRADA! ###########
 ###############################################
-tamanhoViga = input("Digite o tamanho da viga em metros: ");
-forcas = getForcas()
-torques = getTorques()
-momentos = getMomentos()
-carregamentos = getCarregamentos()
-moduloCisalhamento = getModuloCisalhamento()
-moduloElasticidade = getModuloElasticidade()
-coeficiente_de_Poisson = getCoeficiente_de_Poisson()
-infoFormato = getFormato()
 
-if tamanhoViga == 0
-  error("Viga inexistente")
-endif
+#tamanhoViga = input("Digite o tamanho da viga em metros: ");
+#forcas = getForcas()
+#torques = getTorques()
+#momentos = getMomentos()
+#carregamentos = getCarregamentos()
+#moduloCisalhamento = getModuloCisalhamento()
+#moduloElasticidade = getModuloElasticidade()
+#coeficiente_de_Poisson = getCoeficiente_de_Poisson()
+#limite_de_escoamento = getLimite_de_Escoamento()
+#infoFormato = getFormato()
 
-%{
-EXEMPLOS AULA 5/7
-tamanhoViga = 3.75;
+#if tamanhoViga == 0
+#  error("Viga inexistente")
+#endif
+
+
+#EXEMPLOS AULA 5/7
+tamanhoViga = 0.3;
 momentos = zeros(0,2);
 forcas = zeros(0,3);
 carregamentos = zeros(0,3);
-torques = [0.4,3000;1,-2000]
+torques = [0.3,1800];
 momentos = zeros(0,2);
-infoFormato = [ 1,6.14*power(10,-7), 1]
+# infoFormato = [momentoInerciaEmZ,momentoInerciaPolar,areaTransversal, d_e, d_i, formato]
+infoFormato = [ 2.9*10^(-6),5.80*10^(-6), 0.00283,0.05,0.04,2];
 moduloElasticidade = 1;
-moduloCisalhamento = 63.4* power(10,9);
-%}
-
+moduloCisalhamento = 1;
+coeficiente_de_Poisson = 0.3;
+limite_de_escoamento = 219;
 
 
 ###############################################
@@ -282,15 +285,16 @@ function resultado = resolve_equacao(f,x)
 endfunction
 # sigma_1,sigma_2, teta, sinal
 function resultado_tensao_p = tensao_principal(sigma_1,sigma_2, teta, sinal)
-  resultado_tensao_p = 0
-  if sigma_1 == 0 and sigma_2 == 0
+  resultado_tensao_p = 0;
+  if (sigma_1 == 0) && (sigma_2 == 0)
     if teta == 0
-      resultado_tensao_p = 0
+      resultado_tensao_p = 0;
     else
       if sinal == 0
-        resultado_tensao_p = teta
+        resultado_tensao_p = teta;
       else
-        resultado_tensao_p = -1 * teta
+        resultado_tensao_p = -1 * teta;
+      endif
     endif
   elseif sinal == 0
     resultado_tensao_p = ((sigma_1 + sigma_2)/2) + sqrt(power((sigma_1 + sigma_2)/2,2) + power(teta,2))
@@ -299,7 +303,7 @@ function resultado_tensao_p = tensao_principal(sigma_1,sigma_2, teta, sinal)
   endif
 endfunction
 
-PontosDeInteresse = [unique(vertcat(0.0,forcas(:,1),momentos(:,1),carregamentos(:,1),carregamentos(:,2),torques(:,1),tamanhoViga))]
+PontosDeInteresse = [unique(vertcat(0.0,forcas(:,1),momentos(:,1),carregamentos(:,1),carregamentos(:,2),torques(:,1),tamanhoViga))];
 
 
 # representação do q
@@ -427,7 +431,7 @@ for i = 2:rows(PontosDeInteresse)
 
 
  # infoFormato = [momentoInerciaEmZ,momentoInerciaPolar,areaTransversal, d_e, d_i, formato]
-
+  
   for j = 1:rows(X)
     x = X(j);
     if j == 1
@@ -444,22 +448,22 @@ for i = 2:rows(PontosDeInteresse)
         TENSAO_NORMAL_B = N/infoFormato(3) + (M * infoFormato(4)/2)/infoFormato(1);
         TENSAO_NORMAL_C = N/infoFormato(3) + 0;
         TENSAO_NORMAL_D = N/infoFormato(3) + (-1*(M  *infoFormato(4)/2)/infoFormato(1));
-        TENSAO_CISALHAMENTO_A = (-1 * ((V*4)/(infoFormato(3)*3))) + T*infoFormato(4)/infoFormato(2) 
-        TENSAO_CISALHAMENTO_B = 0 + T*infoFormato(4)/infoFormato(2) 
-        TENSAO_CISALHAMENTO_C = (-1 * ((V*4)/(infoFormato(3)*3))) + T*infoFormato(4)/infoFormato(2) 
-        TENSAO_CISALHAMENTO_D = 0 + T*infoFormato(4)/infoFormato(2) 
+        TENSAO_CISALHAMENTO_A = (-1 * ((V*4)/(infoFormato(3)*3))) + T*infoFormato(4)/infoFormato(2); 
+        TENSAO_CISALHAMENTO_B = 0 + T*infoFormato(4)/infoFormato(2); 
+        TENSAO_CISALHAMENTO_C = (-1 * ((V*4)/(infoFormato(3)*3))) + T*infoFormato(4)/infoFormato(2); 
+        TENSAO_CISALHAMENTO_D = 0 + T*infoFormato(4)/infoFormato(2); 
       else
         TENSAO_NORMAL_A = N/infoFormato(3) + 0;
         TENSAO_NORMAL_B = N/infoFormato(3) + (M * infoFormato(4)/2)/infoFormato(1);
         TENSAO_NORMAL_C = N/infoFormato(3) + 0;
         TENSAO_NORMAL_D = N/infoFormato(3) + (-1*(M  *infoFormato(4)/2)/infoFormato(1));
 
-        multCisalhamento = (power(infoFormato(4),2) + infoFormato(4)*infoFormato(5) * power(infoFormato(5),2))/(power(infoFormato(4),2) + power(infoFormato(5),2))
+        multCisalhamento = (power(infoFormato(4),2) + infoFormato(4)*infoFormato(5) * power(infoFormato(5),2))/(power(infoFormato(4),2) + power(infoFormato(5),2));
 
-        TENSAO_CISALHAMENTO_A = (-1 * ((V*4)/(infoFormato(3)*3))*multCisalhamento) + T*infoFormato(4)/infoFormato(2) 
-        TENSAO_CISALHAMENTO_B = 0 + T*infoFormato(4)/infoFormato(2) 
-        TENSAO_CISALHAMENTO_C = (-1 * ((V*4)/(infoFormato(3)*3))*multCisalhamento) + T*infoFormato(4)/infoFormato(2) 
-        TENSAO_CISALHAMENTO_D = 0 + T*infoFormato(4)/infoFormato(2) 
+        TENSAO_CISALHAMENTO_A = (-1 * ((V*4)/(infoFormato(3)*3))*multCisalhamento) + T*infoFormato(4)/infoFormato(2); 
+        TENSAO_CISALHAMENTO_B = 0 + T*infoFormato(4)/infoFormato(2);
+        TENSAO_CISALHAMENTO_C = (-1 * ((V*4)/(infoFormato(3)*3))*multCisalhamento) + T*infoFormato(4)/infoFormato(2); 
+        TENSAO_CISALHAMENTO_D = 0 + T*infoFormato(4)/infoFormato(2); 
 
       endif
 
@@ -480,22 +484,22 @@ for i = 2:rows(PontosDeInteresse)
         TENSAO_NORMAL_B = N/infoFormato(3) + (M * infoFormato(4)/2)/infoFormato(1);
         TENSAO_NORMAL_C = N/infoFormato(3) + 0;
         TENSAO_NORMAL_D = N/infoFormato(3) + (-1*(M  *infoFormato(4)/2)/infoFormato(1));
-        TENSAO_CISALHAMENTO_A = (-1 * ((V*4)/(infoFormato(3)*3))) + T*infoFormato(4)/infoFormato(2) 
-        TENSAO_CISALHAMENTO_B = 0 + T*infoFormato(4)/infoFormato(2) 
-        TENSAO_CISALHAMENTO_C = (-1 * ((V*4)/(infoFormato(3)*3))) + T*infoFormato(4)/infoFormato(2) 
-        TENSAO_CISALHAMENTO_D = 0 + T*infoFormato(4)/infoFormato(2) 
+        TENSAO_CISALHAMENTO_A = (-1 * ((V*4)/(infoFormato(3)*3))) + T*infoFormato(4)/infoFormato(2) ;
+        TENSAO_CISALHAMENTO_B = 0 + T*infoFormato(4)/infoFormato(2) ;
+        TENSAO_CISALHAMENTO_C = (-1 * ((V*4)/(infoFormato(3)*3))) + T*infoFormato(4)/infoFormato(2) ;
+        TENSAO_CISALHAMENTO_D = 0 + T*infoFormato(4)/infoFormato(2) ;
       else
         TENSAO_NORMAL_A = N/infoFormato(3) + 0;
         TENSAO_NORMAL_B = N/infoFormato(3) + (M * infoFormato(4)/2)/infoFormato(1);
         TENSAO_NORMAL_C = N/infoFormato(3) + 0;
         TENSAO_NORMAL_D = N/infoFormato(3) + (-1*(M  *infoFormato(4)/2)/infoFormato(1));
 
-        multCisalhamento = (power(infoFormato(4),2) + infoFormato(4)*infoFormato(5) * power(infoFormato(5),2))/(power(infoFormato(4),2) + power(infoFormato(5),2))
+        multCisalhamento = (power(infoFormato(4),2) + infoFormato(4)*infoFormato(5) * power(infoFormato(5),2))/(power(infoFormato(4),2) + power(infoFormato(5),2));
 
-        TENSAO_CISALHAMENTO_A = (-1 * ((V*4)/(infoFormato(3)*3))*multCisalhamento) + T*infoFormato(4)/infoFormato(2) 
-        TENSAO_CISALHAMENTO_B = 0 + T*infoFormato(4)/infoFormato(2) 
-        TENSAO_CISALHAMENTO_C = (-1 * ((V*4)/(infoFormato(3)*3))*multCisalhamento) + T*infoFormato(4)/infoFormato(2) 
-        TENSAO_CISALHAMENTO_D = 0 + T*infoFormato(4)/infoFormato(2) 
+        TENSAO_CISALHAMENTO_A = (-1 * ((V*4)/(infoFormato(3)*3))*multCisalhamento) + T*infoFormato(4)/infoFormato(2) ;
+        TENSAO_CISALHAMENTO_B = 0 + T*infoFormato(4)/infoFormato(2) ;
+        TENSAO_CISALHAMENTO_C = (-1 * ((V*4)/(infoFormato(3)*3))*multCisalhamento) + T*infoFormato(4)/infoFormato(2); 
+        TENSAO_CISALHAMENTO_D = 0 + T*infoFormato(4)/infoFormato(2); 
 
 
       endif
@@ -514,104 +518,105 @@ for i = 2:rows(PontosDeInteresse)
         TENSAO_NORMAL_B = N/infoFormato(3) + (M * infoFormato(4)/2)/infoFormato(1);
         TENSAO_NORMAL_C = N/infoFormato(3) + 0;
         TENSAO_NORMAL_D = N/infoFormato(3) + (-1*(M  *infoFormato(4)/2)/infoFormato(1));
-        TENSAO_CISALHAMENTO_A = (-1 * ((V*4)/(infoFormato(3)*3))) + T*infoFormato(4)/infoFormato(2) 
-        TENSAO_CISALHAMENTO_B = 0 + T*infoFormato(4)/infoFormato(2) 
-        TENSAO_CISALHAMENTO_C = (-1 * ((V*4)/(infoFormato(3)*3))) + T*infoFormato(4)/infoFormato(2) 
-        TENSAO_CISALHAMENTO_D = 0 + T*infoFormato(4)/infoFormato(2) 
+        TENSAO_CISALHAMENTO_A = (-1 * ((V*4)/(infoFormato(3)*3))) + T*infoFormato(4)/infoFormato(2); 
+        TENSAO_CISALHAMENTO_B = 0 + T*infoFormato(4)/infoFormato(2) ;
+        TENSAO_CISALHAMENTO_C = (-1 * ((V*4)/(infoFormato(3)*3))) + T*infoFormato(4)/infoFormato(2); 
+        TENSAO_CISALHAMENTO_D = 0 + T*infoFormato(4)/infoFormato(2) ;
       else
         TENSAO_NORMAL_A = N/infoFormato(3) + 0;
         TENSAO_NORMAL_B = N/infoFormato(3) + (M * infoFormato(4)/2)/infoFormato(1);
         TENSAO_NORMAL_C = N/infoFormato(3) + 0;
         TENSAO_NORMAL_D = N/infoFormato(3) + (-1*(M  *infoFormato(4)/2)/infoFormato(1));
 
-        multCisalhamento = (power(infoFormato(4),2) + infoFormato(4)*infoFormato(5) * power(infoFormato(5),2))/(power(infoFormato(4),2) + power(infoFormato(5),2))
-        TENSAO_CISALHAMENTO_A = (-1 * ((V*4)/(infoFormato(3)*3))*multCisalhamento) + T*infoFormato(4)/infoFormato(2) 
-        TENSAO_CISALHAMENTO_B = 0 + T*infoFormato(4)/infoFormato(2) 
-        TENSAO_CISALHAMENTO_C = (-1 * ((V*4)/(infoFormato(3)*3))*multCisalhamento) + T*infoFormato(4)/infoFormato(2) 
-        TENSAO_CISALHAMENTO_D = 0 + T*infoFormato(4)/infoFormato(2) 
+        multCisalhamento = (power(infoFormato(4),2) + infoFormato(4)*infoFormato(5) * power(infoFormato(5),2))/(power(infoFormato(4),2) + power(infoFormato(5),2));
+        TENSAO_CISALHAMENTO_A = (-1 * ((V*4)/(infoFormato(3)*3))*multCisalhamento) + T*infoFormato(4)/infoFormato(2) ;
+        TENSAO_CISALHAMENTO_B = 0 + T*infoFormato(4)/infoFormato(2) ;
+        TENSAO_CISALHAMENTO_C = (-1 * ((V*4)/(infoFormato(3)*3))*multCisalhamento) + T*infoFormato(4)/infoFormato(2); 
+        TENSAO_CISALHAMENTO_D = 0 + T*infoFormato(4)/infoFormato(2); 
 
       endif
     endif
+    
     # Tensoes principais
-    ''' Tensoes em A '''
+    #''' Tensoes em A '''
     # tensao_principal(sigma_1,sigma_2, teta, sinal(0 -> +, 1 -> -)
-    TENSAO_P1_A = tensao_principal(TENSAO_NORMAL_A, 0, TENSAO_CISALHAMENTO_A, 0)
-    TENSAO_P2_A = tensao_principal(TENSAO_NORMAL_A, 0, TENSAO_CISALHAMENTO_A, 1) 
-    TENSAO_P3_A = 0
+    TENSAO_P1_A = tensao_principal(TENSAO_NORMAL_A, 0, TENSAO_CISALHAMENTO_A, 0);
+    TENSAO_P2_A = tensao_principal(TENSAO_NORMAL_A, 0, TENSAO_CISALHAMENTO_A, 1); 
+    TENSAO_P3_A = 0;
     # Reordena tensões em tensao_1 > tensao_2 > tensao_3
-    reordena = sort([TENSAO_P1_A, TENSAO_P2_A, TENSAO_P3_A])
-    TENSAO_P1_A = reordena(3) 
-    TENSAO_P2_A = reordena(2)
-    TENSAO_P3_A = reordena(1)
+    reordena = sort([TENSAO_P1_A, TENSAO_P2_A, TENSAO_P3_A]);
+    TENSAO_P1_A = reordena(3);
+    TENSAO_P2_A = reordena(2);
+    TENSAO_P3_A = reordena(1);
     
-    ''' Tensoes em B '''
+    #''' Tensoes em B '''
     # tensao_principal(sigma_1,sigma_2, teta, sinal(0 -> +, 1 -> -)
-    TENSAO_P1_B = tensao_principal(TENSAO_NORMAL_B, 0, TENSAO_CISALHAMENTO_B, 0)
-    TENSAO_P2_B = tensao_principal(TENSAO_NORMAL_B, 0, TENSAO_CISALHAMENTO_B, 1) 
-    TENSAO_P3_B = 0
+    TENSAO_P1_B = tensao_principal(TENSAO_NORMAL_B, 0, TENSAO_CISALHAMENTO_B, 0);
+    TENSAO_P2_B = tensao_principal(TENSAO_NORMAL_B, 0, TENSAO_CISALHAMENTO_B, 1); 
+    TENSAO_P3_B = 0;
     # Reordena tensões em tensao_1 > tensao_2 > tensao_3
-    reordena = sort([TENSAO_P1_B, TENSAO_P2_B, TENSAO_P3_B])
-    TENSAO_P1_B = reordena(3) 
-    TENSAO_P2_B = reordena(2)
-    TENSAO_P3_B = reordena(1)
+    reordena = sort([TENSAO_P1_B, TENSAO_P2_B, TENSAO_P3_B]);
+    TENSAO_P1_B = reordena(3);
+    TENSAO_P2_B = reordena(2);
+    TENSAO_P3_B = reordena(1);
     
-    ''' Tensoes em C '''
+    #''' Tensoes em C '''
     # tensao_principal(sigma_1,sigma_2, teta, sinal(0 -> +, 1 -> -)
-    TENSAO_P1_C = tensao_principal(TENSAO_NORMAL_C, 0, TENSAO_CISALHAMENTO_C, 0)
-    TENSAO_P2_C = tensao_principal(TENSAO_NORMAL_C, 0, TENSAO_CISALHAMENTO_C, 1) 
-    TENSAO_P3_C = 0
+    TENSAO_P1_C = tensao_principal(TENSAO_NORMAL_C, 0, TENSAO_CISALHAMENTO_C, 0);
+    TENSAO_P2_C = tensao_principal(TENSAO_NORMAL_C, 0, TENSAO_CISALHAMENTO_C, 1); 
+    TENSAO_P3_C = 0;
     # Reordena tensões em tensao_1 > tensao_2 > tensao_3
-    reordena = sort([TENSAO_P1_C, TENSAO_P2_C, TENSAO_P3_C])
-    TENSAO_P1_C = reordena(3) 
-    TENSAO_P2_C = reordena(2)
-    TENSAO_P3_C = reordena(1)
+    reordena = sort([TENSAO_P1_C, TENSAO_P2_C, TENSAO_P3_C]);
+    TENSAO_P1_C = reordena(3);
+    TENSAO_P2_C = reordena(2);
+    TENSAO_P3_C = reordena(1);
     
-    ''' Tensoes em D '''
+    #''' Tensoes em D '''
     # tensao_principal(sigma_1,sigma_2, teta, sinal(0 -> +, 1 -> -)
-    TENSAO_P1_D = tensao_principal(TENSAO_NORMAL_D, 0, TENSAO_CISALHAMENTO_D, 0)
-    TENSAO_P2_D = tensao_principal(TENSAO_NORMAL_D, 0, TENSAO_CISALHAMENTO_D, 1) 
-    TENSAO_P3_D = 0
+    TENSAO_P1_D = tensao_principal(TENSAO_NORMAL_D, 0, TENSAO_CISALHAMENTO_D, 0);
+    TENSAO_P2_D = tensao_principal(TENSAO_NORMAL_D, 0, TENSAO_CISALHAMENTO_D, 1); 
+    TENSAO_P3_D = 0;
     # Reordena tensões em tensao_1 > tensao_2 > tensao_3
-    reordena = sort([TENSAO_P1_D, TENSAO_P2_D, TENSAO_P3_D])
-    TENSAO_P1_D = reordena(3) 
-    TENSAO_P2_D = reordena(2)
-    TENSAO_P3_D = reordena(1)
+    reordena = sort([TENSAO_P1_D, TENSAO_P2_D, TENSAO_P3_D]);
+    TENSAO_P1_D = reordena(3); 
+    TENSAO_P2_D = reordena(2);
+    TENSAO_P3_D = reordena(1);
     
     #Tensões de Cisalhamento Máximas Absolutas
-    TENSAO_CISALHAMENTO_MAX_ABS_A = (TENSAO_P1_A - TENSAO_P3_A)/2
-    TENSAO_CISALHAMENTO_MAX_ABS_B = (TENSAO_P1_B - TENSAO_P3_B)/2
-    TENSAO_CISALHAMENTO_MAX_ABS_C = (TENSAO_P1_C - TENSAO_P3_C)/2
-    TENSAO_CISALHAMENTO_MAX_ABS_D = (TENSAO_P1_D - TENSAO_P3_D)/2
+    TENSAO_CISALHAMENTO_MAX_ABS_A = (TENSAO_P1_A - TENSAO_P3_A)/2;
+    TENSAO_CISALHAMENTO_MAX_ABS_B = (TENSAO_P1_B - TENSAO_P3_B)/2;
+    TENSAO_CISALHAMENTO_MAX_ABS_C = (TENSAO_P1_C - TENSAO_P3_C)/2;
+    TENSAO_CISALHAMENTO_MAX_ABS_D = (TENSAO_P1_D - TENSAO_P3_D)/2;
     
     # Deformações ε x , ε y , ε z , γ xy , γ yz e γ zx
-    '''Deformacoes em A'''
-    DEFORMACAO_Ex_A = (1/moduloElasticidade) * (TENSAO_NORMAL_A - coeficiente_de_Poisson*( 0 + 0 );
-    DEFORMACAO_Ey_A = (1/moduloElasticidade) * (0 - coeficiente_de_Poisson*( TENSAO_NORMAL_A + 0 );
-    DEFORMACAO_Ez_A = (1/moduloElasticidade) * (0 - coeficiente_de_Poisson*( TENSAO_NORMAL_A + 0 );
+    #'''Deformacoes em A'''
+    DEFORMACAO_Ex_A = (1/moduloElasticidade) * (TENSAO_NORMAL_A - coeficiente_de_Poisson*( 0 + 0 ));
+    DEFORMACAO_Ey_A = (1/moduloElasticidade) * (0 - coeficiente_de_Poisson*( TENSAO_NORMAL_A + 0 ));
+    DEFORMACAO_Ez_A = (1/moduloElasticidade) * (0 - coeficiente_de_Poisson*( TENSAO_NORMAL_A + 0 ));
     DEFORMACAO_Yxy_A = (1/moduloCisalhamento) * TENSAO_CISALHAMENTO_A;
     DEFORMACAO_Yyz_A = (1/moduloCisalhamento) * 0;
     DEFORMACAO_Yzx_A = (1/moduloCisalhamento) * 0;
     
-    '''Deformacoes em B'''
-    DEFORMACAO_Ex_B = (1/moduloElasticidade) * (TENSAO_NORMAL_B - coeficiente_de_Poisson*( 0 + 0 );
-    DEFORMACAO_Ey_B = (1/moduloElasticidade) * (0 - coeficiente_de_Poisson*( TENSAO_NORMAL_B + 0 );
-    DEFORMACAO_Ez_B = (1/moduloElasticidade) * (0 - coeficiente_de_Poisson*( TENSAO_NORMAL_B + 0 );
+    #'''Deformacoes em B'''
+    DEFORMACAO_Ex_B = (1/moduloElasticidade) * (TENSAO_NORMAL_B - coeficiente_de_Poisson*( 0 + 0 ));
+    DEFORMACAO_Ey_B = (1/moduloElasticidade) * (0 - coeficiente_de_Poisson*( TENSAO_NORMAL_B + 0 ));
+    DEFORMACAO_Ez_B = (1/moduloElasticidade) * (0 - coeficiente_de_Poisson*( TENSAO_NORMAL_B + 0 ));
     DEFORMACAO_Yxy_B = (1/moduloCisalhamento) * 0;
     DEFORMACAO_Yyz_B = (1/moduloCisalhamento) * 0;
     DEFORMACAO_Yzx_B = (1/moduloCisalhamento) * TENSAO_CISALHAMENTO_B;
     
-    '''Deformacoes em C'''
-    DEFORMACAO_Ex_C = (1/moduloElasticidade) * (TENSAO_NORMAL_C - coeficiente_de_Poisson*( 0 + 0 );
-    DEFORMACAO_Ey_C = (1/moduloElasticidade) * (0 - coeficiente_de_Poisson*( TENSAO_NORMAL_C + 0 );
-    DEFORMACAO_Ez_C = (1/moduloElasticidade) * (0 - coeficiente_de_Poisson*( TENSAO_NORMAL_C + 0 );
+    #'''Deformacoes em C'''
+    DEFORMACAO_Ex_C = (1/moduloElasticidade) * (TENSAO_NORMAL_C - coeficiente_de_Poisson*( 0 + 0 ));
+    DEFORMACAO_Ey_C = (1/moduloElasticidade) * (0 - coeficiente_de_Poisson*( TENSAO_NORMAL_C + 0 ));
+    DEFORMACAO_Ez_C = (1/moduloElasticidade) * (0 - coeficiente_de_Poisson*( TENSAO_NORMAL_C + 0 ));
     DEFORMACAO_Yxy_C = (1/moduloCisalhamento) * TENSAO_CISALHAMENTO_C;
     DEFORMACAO_Yyz_C = (1/moduloCisalhamento) * 0;
     DEFORMACAO_Yzx_C = (1/moduloCisalhamento) * 0;
     
-    '''Deformacoes em D'''
-    DEFORMACAO_Ex_D = (1/moduloElasticidade) * (TENSAO_NORMAL_D - coeficiente_de_Poisson*( 0 + 0 );
-    DEFORMACAO_Ey_D = (1/moduloElasticidade) * (0 - coeficiente_de_Poisson*( TENSAO_NORMAL_D + 0 );
-    DEFORMACAO_Ez_D = (1/moduloElasticidade) * (0 - coeficiente_de_Poisson*( TENSAO_NORMAL_D + 0 );
+    #'''Deformacoes em D'''
+    DEFORMACAO_Ex_D = (1/moduloElasticidade) * (TENSAO_NORMAL_D - coeficiente_de_Poisson*( 0 + 0 ));
+    DEFORMACAO_Ey_D = (1/moduloElasticidade) * (0 - coeficiente_de_Poisson*( TENSAO_NORMAL_D + 0 ));
+    DEFORMACAO_Ez_D = (1/moduloElasticidade) * (0 - coeficiente_de_Poisson*( TENSAO_NORMAL_D + 0 ));
     DEFORMACAO_Yxy_D = (1/moduloCisalhamento) * 0;
     DEFORMACAO_Yyz_D = (1/moduloCisalhamento) * 0;
     DEFORMACAO_Yzx_D = (1/moduloCisalhamento) * TENSAO_CISALHAMENTO_D;
@@ -623,34 +628,35 @@ for i = 2:rows(PontosDeInteresse)
     TRESCA_C = limite_de_escoamento / (TENSAO_P1_C - TENSAO_P3_C);
     TRESCA_D = limite_de_escoamento / (TENSAO_P1_D - TENSAO_P3_D);
     
-    if TENSAO_P1_A == 0:
+    if TENSAO_P1_A == 0
       VON_MISES_A = limite_de_escoamento / sqrt(power(TENSAO_P2_A,2) - (TENSAO_P2_A*TENSAO_P3_A) + (power(TENSAO_P3_A,2)));
-    elseif TENSAO_P2_A == 0:
+    elseif TENSAO_P2_A == 0
       VON_MISES_A = limite_de_escoamento / sqrt(power(TENSAO_P1_A,2) - (TENSAO_P1_A*TENSAO_P3_A) + (power(TENSAO_P3_A,2)));
     else  
       VON_MISES_A = limite_de_escoamento / sqrt(power(TENSAO_P1_A,2) - (TENSAO_P1_A*TENSAO_P2_A) + (power(TENSAO_P2_A,2)));
-    
-    if TENSAO_P1_B == 0:
+    endif
+    if TENSAO_P1_B == 0
       VON_MISES_B = limite_de_escoamento / sqrt(power(TENSAO_P2_B,2) - (TENSAO_P2_B*TENSAO_P3_B) + (power(TENSAO_P3_B,2)));
-    elseif TENSAO_P2_B == 0:
+    elseif TENSAO_P2_B == 0
       VON_MISES_B = limite_de_escoamento / sqrt(power(TENSAO_P1_B,2) - (TENSAO_P1_B*TENSAO_P3_B) + (power(TENSAO_P3_B,2)));
     else  
       VON_MISES_B = limite_de_escoamento / sqrt(power(TENSAO_P1_B,2) - (TENSAO_P1_B*TENSAO_P2_B) + (power(TENSAO_P2_B,2)));
-    
-    if TENSAO_P1_C == 0:
+    endif
+    if TENSAO_P1_C == 0
       VON_MISES_C = limite_de_escoamento / sqrt(power(TENSAO_P2_C,2) - (TENSAO_P2_C*TENSAO_P3_C) + (power(TENSAO_P3_C,2)));
-    elseif TENSAO_P2_C == 0:
+    elseif TENSAO_P2_C == 0
       VON_MISES_C = limite_de_escoamento / sqrt(power(TENSAO_P1_C,2) - (TENSAO_P1_C*TENSAO_P3_C) + (power(TENSAO_P3_C,2)));
     else  
       VON_MISES_C = limite_de_escoamento / sqrt(power(TENSAO_P1_C,2) - (TENSAO_P1_C*TENSAO_P2_C) + (power(TENSAO_P2_C,2)));
-    
-    if TENSAO_P1_D == 0:
+    endif
+    if TENSAO_P1_D == 0
       VON_MISES_D = limite_de_escoamento / sqrt(power(TENSAO_P2_D,2) - (TENSAO_P2_D*TENSAO_P3_D) + (power(TENSAO_P3_D,2)));
-    elseif TENSAO_P2_D == 0:
+    elseif TENSAO_P2_D == 0
       VON_MISES_D = limite_de_escoamento / sqrt(power(TENSAO_P1_D,2) - (TENSAO_P1_D*TENSAO_P3_D) + (power(TENSAO_P3_D,2)));
     else  
       VON_MISES_D = limite_de_escoamento / sqrt(power(TENSAO_P1_D,2) - (TENSAO_P1_D*TENSAO_P2_D) + (power(TENSAO_P2_D,2)));
-    
+    endif
+    %}
     #printf(DadosDoDiagrama_V_x(j));
     DadosDoDiagrama_V_x(j) = [V];
     DadosDoDiagrama_M_x(j) = [M];
@@ -669,32 +675,31 @@ for i = 2:rows(PontosDeInteresse)
     DadosDoDiagrama_TENSAO_CISALHAMENTO_B_x(j) = [TENSAO_CISALHAMENTO_B];
     DadosDoDiagrama_TENSAO_CISALHAMENTO_C_x(j) = [TENSAO_CISALHAMENTO_C];
     DadosDoDiagrama_TENSAO_CISALHAMENTO_D_x(j) = [TENSAO_CISALHAMENTO_D];
-    DadosDoDiagrama_TENSOES_PRINCIPAIS_A_x(j) = [TENSAO_P1_A,TENSAO_P2_A,TENSAO_P3_A];
-    DadosDoDiagrama_TENSOES_PRINCIPAIS_B_x(j) = [TENSAO_P1_B,TENSAO_P2_B,TENSAO_P3_B];
-    DadosDoDiagrama_TENSOES_PRINCIPAIS_C_x(j) = [TENSAO_P1_C,TENSAO_P2_C,TENSAO_P3_C];
-    DadosDoDiagrama_TENSOES_PRINCIPAIS_D_x(j) = [TENSAO_P1_D,TENSAO_P2_D,TENSAO_P3_D];
+    DadosDoDiagrama_TENSOES_PRINCIPAIS_A_x(j,:) = [TENSAO_P1_A,TENSAO_P2_A,TENSAO_P3_A];
+    DadosDoDiagrama_TENSOES_PRINCIPAIS_B_x(j,:) = [TENSAO_P1_B,TENSAO_P2_B,TENSAO_P3_B];
+    DadosDoDiagrama_TENSOES_PRINCIPAIS_C_x(j,:) = [TENSAO_P1_C,TENSAO_P2_C,TENSAO_P3_C];
+    DadosDoDiagrama_TENSOES_PRINCIPAIS_D_x(j,:) = [TENSAO_P1_D,TENSAO_P2_D,TENSAO_P3_D];
     DadosDoDiagrama_TENSAO_CISALHAMENTO_MAX_ABS_A_x(j) = [TENSAO_CISALHAMENTO_MAX_ABS_A];
     DadosDoDiagrama_TENSAO_CISALHAMENTO_MAX_ABS_B_x(j) = [TENSAO_CISALHAMENTO_MAX_ABS_B];
     DadosDoDiagrama_TENSAO_CISALHAMENTO_MAX_ABS_C_x(j) = [TENSAO_CISALHAMENTO_MAX_ABS_C];
     DadosDoDiagrama_TENSAO_CISALHAMENTO_MAX_ABS_D_x(j) = [TENSAO_CISALHAMENTO_MAX_ABS_D];
-    DadosDoDiagrama_DEFORMACAO_E_A_x = [DEFORMACAO_Ex_A,DEFORMACAO_Ey_A,DEFORMACAO_Ez_A];
-    DadosDoDiagrama_DEFORMACAO_E_B_x = [DEFORMACAO_Ex_B,DEFORMACAO_Ey_B,DEFORMACAO_Ez_B];
-    DadosDoDiagrama_DEFORMACAO_E_C_x = [DEFORMACAO_Ex_C,DEFORMACAO_Ey_C,DEFORMACAO_Ez_C];
-    DadosDoDiagrama_DEFORMACAO_E_D_x = [DEFORMACAO_Ex_D,DEFORMACAO_Ey_D,DEFORMACAO_Ez_D];
-    DadosDoDiagrama_DEFORMACAO_Y_A_x = [DEFORMACAO_Yxy_A,DEFORMACAO_Yyz_A,DEFORMACAO_Yzx_A];
-    DadosDoDiagrama_DEFORMACAO_Y_B_x = [DEFORMACAO_Yxy_B,DEFORMACAO_Yyz_B,DEFORMACAO_Yzx_B];
-    DadosDoDiagrama_DEFORMACAO_Y_C_x = [DEFORMACAO_Yxy_C,DEFORMACAO_Yyz_C,DEFORMACAO_Yzx_C];
-    DadosDoDiagrama_DEFORMACAO_Y_D_x = [DEFORMACAO_Yxy_D,DEFORMACAO_Yyz_D,DEFORMACAO_Yzx_D];
-    DadosDoDiagrama_TRESCA_AND_VON_MISES_A_x = [TRESCA_A, VON_MISES_A];
-    DadosDoDiagrama_TRESCA_AND_VON_MISES_B_x = [TRESCA_B, VON_MISES_B];
-    DadosDoDiagrama_TRESCA_AND_VON_MISES_C_x = [TRESCA_C, VON_MISES_C];
-    DadosDoDiagrama_TRESCA_AND_VON_MISES_D_x = [TRESCA_D, VON_MISES_D];
+    DadosDoDiagrama_DEFORMACAO_E_A_x(j,:) = [DEFORMACAO_Ex_A,DEFORMACAO_Ey_A,DEFORMACAO_Ez_A];
+    DadosDoDiagrama_DEFORMACAO_E_B_x(j,:) = [DEFORMACAO_Ex_B,DEFORMACAO_Ey_B,DEFORMACAO_Ez_B];
+    DadosDoDiagrama_DEFORMACAO_E_C_x(j,:) = [DEFORMACAO_Ex_C,DEFORMACAO_Ey_C,DEFORMACAO_Ez_C];
+    DadosDoDiagrama_DEFORMACAO_E_D_x(j,:) = [DEFORMACAO_Ex_D,DEFORMACAO_Ey_D,DEFORMACAO_Ez_D];
+    DadosDoDiagrama_DEFORMACAO_Y_A_x(j,:) = [DEFORMACAO_Yxy_A,DEFORMACAO_Yyz_A,DEFORMACAO_Yzx_A];
+    DadosDoDiagrama_DEFORMACAO_Y_B_x(j,:) = [DEFORMACAO_Yxy_B,DEFORMACAO_Yyz_B,DEFORMACAO_Yzx_B];
+    DadosDoDiagrama_DEFORMACAO_Y_C_x(j,:) = [DEFORMACAO_Yxy_C,DEFORMACAO_Yyz_C,DEFORMACAO_Yzx_C];
+    DadosDoDiagrama_DEFORMACAO_Y_D_x(j,:) = [DEFORMACAO_Yxy_D,DEFORMACAO_Yyz_D,DEFORMACAO_Yzx_D];
+    DadosDoDiagrama_TRESCA_AND_VON_MISES_A_x(j,:) = [TRESCA_A*10^6, VON_MISES_A*10^6];
+    DadosDoDiagrama_TRESCA_AND_VON_MISES_B_x(j,:) = [TRESCA_B, VON_MISES_B];
+    DadosDoDiagrama_TRESCA_AND_VON_MISES_C_x(j,:) = [TRESCA_C, VON_MISES_C];
+    DadosDoDiagrama_TRESCA_AND_VON_MISES_D_x(j,:) = [TRESCA_D, VON_MISES_D];
 
+endfor 
 
-  endfor 
   # plot da função para cada intervalo dos pontos de interesse
-  
-
+  figure(1)
   subplot(4,2,1);
   hold on;
   xlabel ("x");
@@ -758,8 +763,84 @@ for i = 2:rows(PontosDeInteresse)
   title ("Angulo de Torcao");
   plot(X,DadosDoDiagrama_TORCAO_x);
   hold off;
+  saveas (1,"diagramaForcasSolicitantes.pdf");
+  ############  PONTO A  ##########
+  # Plot de todos os graficos relacionados ao ponto A da barra
+  #################################
+  #figure(2)
+  figure1=figure(2,'Position', [500, 500, 1024, 1200]);
+  subplot(4,2,1);
+  hold on;
+  xlabel ("x(m)");
+  ylabel ("Tensao(Pa)");
+  title ("Tensao normal em A");
+  plot(X,DadosDoDiagrama_TENSAO_NORMAL_A_x);
+  hold off;
+  
+  subplot(4,2,2);
+  hold on;
+  xlabel ("x(m)");
+  ylabel ("Tensão de cisalhamento(Pa)");
+  title ("Tensao de cisalhamento em A");
+  plot(X,DadosDoDiagrama_TENSAO_CISALHAMENTO_A_x);
+  hold off;
+    
+  subplot(4,2,3);
+  hold on;
+  xlabel ("x(m)");
+  ylabel ("tensoes(Pa)");
+  title ("Tensoes principais em A");
+  plot(X,DadosDoDiagrama_TENSOES_PRINCIPAIS_A_x(:,1),"r");
+  plot(X,DadosDoDiagrama_TENSOES_PRINCIPAIS_A_x(:,2),"g");
+  plot(X,DadosDoDiagrama_TENSOES_PRINCIPAIS_A_x(:,3),"b");
+  legend('Tensao 1','Tensao 2','Tensao 3');
+  hold off;
+  
+  subplot(4,2,4);
+  hold on;
+  xlabel ("x(m)");
+  ylabel ("Tensão de cisalhamento(Pa)");
+  title ("Tensao de cisalhamento maxima absoluta em A");
+  plot(X,DadosDoDiagrama_TENSAO_CISALHAMENTO_MAX_ABS_A_x);
+  hold off;
+  
+  subplot(4,2,5);
+  hold on;
+  xlabel ("x(m)");
+  ylabel ("Deformacoes E(Pa)");
+  title ("Deformacoes Normais em A");
+  plot(X,DadosDoDiagrama_DEFORMACAO_E_A_x(:,1),"r");
+  plot(X,DadosDoDiagrama_DEFORMACAO_E_A_x(:,2),"g");
+  plot(X,DadosDoDiagrama_DEFORMACAO_E_A_x(:,3),"b");
+  legend('Ex','Ey','Ez');
+  hold off;
+  
+  subplot(4,2,6);
+  hold on;
+  xlabel ("x(m)");
+  ylabel ("Deformacoes Y(Pa)");
+  title ("Deformacoes por cisalhamento em A");
+  plot(X,DadosDoDiagrama_DEFORMACAO_Y_A_x(:,1),"r");
+  plot(X,DadosDoDiagrama_DEFORMACAO_Y_A_x(:,2),"g");
+  plot(X,DadosDoDiagrama_DEFORMACAO_Y_A_x(:,3),"b");
+  legend('Yxy','Yyz','Yzx');
+  hold off;
+  
+  subplot(4,2,7);
+  hold on;
+  xlabel ("x(m)");
+  ylabel ("Coeficientes (MPa)");
+  title ("Coeficientes de segurança em A");
+  plot(X,DadosDoDiagrama_TRESCA_AND_VON_MISES_A_x(:,1),"r");
+  plot(X,DadosDoDiagrama_TRESCA_AND_VON_MISES_A_x(:,2),"g");
+  legend('Tresca','Von Mises');
+  hold off;
+
+  saveas (2,"DiagramasDoPontoA.jpg");
+  
+  
 endfor
-print diagramaForcasSolicitantes.pdf;
+
 open diagramaForcasSolicitantes.pdf
 
 
