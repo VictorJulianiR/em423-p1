@@ -165,22 +165,22 @@ endfunction
 ######## ENTRADA! ###########
 ###############################################
 
-#tamanhoViga = input("Digite o tamanho da viga em metros: ");
-#forcas = getForcas()
-#torques = getTorques()
-#momentos = getMomentos()
-#carregamentos = getCarregamentos()
-#moduloCisalhamento = getModuloCisalhamento()
-#moduloElasticidade = getModuloElasticidade()
-#coeficiente_de_Poisson = getCoeficiente_de_Poisson()
-#limite_de_escoamento = getLimite_de_Escoamento()
-#infoFormato = getFormato()
+tamanhoViga = input("Digite o tamanho da viga em metros: ");
+forcas = getForcas()
+torques = getTorques()
+momentos = getMomentos()
+carregamentos = getCarregamentos()
+moduloCisalhamento = getModuloCisalhamento()
+moduloElasticidade = getModuloElasticidade()
+coeficiente_de_Poisson = getCoeficiente_de_Poisson()
+limite_de_escoamento = getLimite_de_Escoamento()
+infoFormato = getFormato()
 
-#if tamanhoViga == 0
-#  error("Viga inexistente")
-#endif
+if tamanhoViga == 0
+  error("Viga inexistente")
+endif
 
-
+%{
 #EXEMPLOS AULA 5/7
 tamanhoViga = 0.3;
 momentos = zeros(0,2);
@@ -194,7 +194,7 @@ moduloElasticidade = 1;
 moduloCisalhamento = 1;
 coeficiente_de_Poisson = 0.3;
 limite_de_escoamento = 219;
-
+%}
 
 ###############################################
 ######## CÁLCULOS PARA O ENGASTADO! ###########
@@ -254,7 +254,7 @@ if (torque)
   torques = [torques;[0,torque]];
 endif
 if(momento)
-  momentos = [momentos;[0,momento]]
+  momentos = [momentos;[0,momento]];
 endif
 
 # Forma de representar e implementar a integral de singularidade
@@ -781,7 +781,7 @@ endfor
   subplot(2,2,2);
   hold on;
   xlabel ("x(m)");
-  ylabel ("Tensão de cisalhamento(Pa)");
+  ylabel ("Tensao de cisalhamento(Pa)");
   title ("Tensao de cisalhamento em A");
   plot(X,DadosDoDiagrama_TENSAO_CISALHAMENTO_A_x);
   hold off;
@@ -800,7 +800,7 @@ endfor
   subplot(2,2,4);
   hold on;
   xlabel ("x(m)");
-  ylabel ("Tensão de cisalhamento(Pa)");
+  ylabel ("Tensao de cisalhamento(Pa)");
   title ("Tensao de cisalhamento maxima absoluta em A");
   plot(X,DadosDoDiagrama_TENSAO_CISALHAMENTO_MAX_ABS_A_x);
   hold off;
@@ -835,7 +835,7 @@ endfor
   hold on;
   xlabel ("x(m)");
   ylabel ("Coeficientes (MPa)");
-  title ("Coeficientes de segurança em A");
+  title ("Coeficientes de seguranca em A");
   plot(X,DadosDoDiagrama_TRESCA_AND_VON_MISES_A_x(:,1),"r");
   plot(X,DadosDoDiagrama_TRESCA_AND_VON_MISES_A_x(:,2),"g");
   legend('Tresca','Von Mises');
@@ -859,7 +859,7 @@ endfor
   subplot(2,2,2);
   hold on;
   xlabel ("x(m)");
-  ylabel ("Tensão de cisalhamento(Pa)");
+  ylabel ("Tensao de cisalhamento(Pa)");
   title ("Tensao de cisalhamento em B ");
   plot(X,DadosDoDiagrama_TENSAO_CISALHAMENTO_B_x);
   hold off;
@@ -878,7 +878,7 @@ endfor
   subplot(2,2,4);
   hold on;
   xlabel ("x(m)");
-  ylabel ("Tensão de cisalhamento(Pa)");
+  ylabel ("Tensao de cisalhamento(Pa)");
   title ("Tensao de cisalhamento maxima absoluta em B ");
   plot(X,DadosDoDiagrama_TENSAO_CISALHAMENTO_MAX_ABS_B_x);
   hold off;
@@ -913,7 +913,7 @@ endfor
   hold on;
   xlabel ("x(m)");
   ylabel ("Coeficientes (MPa)");
-  title ("Coeficientes de segurança em B ");
+  title ("Coeficientes de seguranca em B ");
   plot(X,DadosDoDiagrama_TRESCA_AND_VON_MISES_B_x(:,1),"r");
   plot(X,DadosDoDiagrama_TRESCA_AND_VON_MISES_B_x(:,2),"g");
   legend('Tresca','Von Mises');
@@ -937,7 +937,7 @@ endfor
   subplot(2,2,2);
   hold on;
   xlabel ("x(m)");
-  ylabel ("Tensão de cisalhamento(Pa)");
+  ylabel ("Tensao de cisalhamento(Pa)");
   title ("Tensao de cisalhamento em C ");
   plot(X,DadosDoDiagrama_TENSAO_CISALHAMENTO_C_x);
   hold off;
@@ -956,7 +956,7 @@ endfor
   subplot(2,2,4);
   hold on;
   xlabel ("x(m)");
-  ylabel ("Tensão de cisalhamento(Pa)");
+  ylabel ("Tensao de cisalhamento(Pa)");
   title ("Tensao de cisalhamento maxima absoluta em C ");
   plot(X,DadosDoDiagrama_TENSAO_CISALHAMENTO_MAX_ABS_C_x);
   hold off;
@@ -991,7 +991,7 @@ endfor
   hold on;
   xlabel ("x(m)");
   ylabel ("Coeficientes (MPa)");
-  title ("Coeficientes de segurança em C ");
+  title ("Coeficientes de seguranca em C ");
   plot(X,DadosDoDiagrama_TRESCA_AND_VON_MISES_C_x(:,1),"r");
   plot(X,DadosDoDiagrama_TRESCA_AND_VON_MISES_C_x(:,2),"g");
   legend('Tresca','Von Mises');
@@ -1015,7 +1015,7 @@ endfor
   subplot(2,2,2);
   hold on;
   xlabel ("x(m)");
-  ylabel ("Tensão de cisalhamento(Pa)");
+  ylabel ("Tensao de cisalhamento(Pa)");
   title ("Tensao de cisalhamento em D ");
   plot(X,DadosDoDiagrama_TENSAO_CISALHAMENTO_D_x);
   hold off;
@@ -1034,7 +1034,7 @@ endfor
   subplot(2,2,4);
   hold on;
   xlabel ("x(m)");
-  ylabel ("Tensão de cisalhamento(Pa)");
+  ylabel ("Tensao de cisalhamento(Pa)");
   title ("Tensao de cisalhamento maxima absoluta em D ");
   plot(X,DadosDoDiagrama_TENSAO_CISALHAMENTO_MAX_ABS_D_x);
   hold off;
@@ -1069,7 +1069,7 @@ endfor
   hold on;
   xlabel ("x(m)");
   ylabel ("Coeficientes (MPa)");
-  title ("Coeficientes de segurança em D ");
+  title ("Coeficientes de seguranca em D ");
   plot(X,DadosDoDiagrama_TRESCA_AND_VON_MISES_D_x(:,1),"r");
   plot(X,DadosDoDiagrama_TRESCA_AND_VON_MISES_D_x(:,2),"g");
   legend('Tresca','Von Mises');
